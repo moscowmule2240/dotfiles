@@ -1,0 +1,22 @@
+[user]
+	name = moscowmule2240
+	email = moscowmule2240@outlook.jp
+[color]
+	branch = auto
+	diff = auto
+	interactive = auto
+	status = auto
+[core]
+	excludesfile = ~/.gitignore_global
+	editor = /usr/bin/vim
+	quotepath = false
+	precomposeunicode = true
+[push]
+#	default = simple
+	default = current
+[pull]
+	default = simple
+#	default = current
+[pack]
+	threads = 2
+
