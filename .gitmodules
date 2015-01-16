@@ -1,0 +1,3 @@
+[submodule "dotmine"]
+	path = dotmine
+	url = git@bitbucket.org:moscowmule2240/dotmine.git
