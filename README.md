@@ -1,13 +1,17 @@
 dotfiles
 ========
 
-dotfiles
+## Homebrew
+
+> instgall
+
+    $ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 ## dotfiles
 
 > install
 
-    ./setup.sh
+    $ ./setup.sh
 
 ## pyenv
 ### install
