@@ -12,11 +12,7 @@
 	quotepath = false
 	precomposeunicode = true
 [push]
-#	default = simple
 	default = current
-[pull]
-	default = simple
-#	default = current
 [pack]
 	threads = 2
 
