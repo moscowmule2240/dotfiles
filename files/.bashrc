@@ -2,6 +2,9 @@
 alias ls='ls -G'
 export LSCOLORS=gxfxcxdxbxegedabagacad
 
+# bash_completion
+source /usr/local/etc/bash_completion.d/*
+
 # mysql
 export PATH=$PATH:$HOME/opt/mysql/5.5.36/bin/
 export DYLD_FALLBACK_LIBRARY_PATH=$HOME/opt/mysql/5.5.36/lib/:$DYLD_FALLBACK_LIBRARY_PATH
