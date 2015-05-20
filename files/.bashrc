@@ -2,6 +2,10 @@
 alias ls='ls -G'
 export LSCOLORS=gxfxcxdxbxegedabagacad
 
+# history
+HISTSIZE=102400
+HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
+
 # bash_completion
 source /usr/local/etc/bash_completion.d/*
 
@@ -40,7 +44,9 @@ alias git="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/
 
 # alias
 alias mysql-5.5.36='~/sandboxes/msb_5_6_16/stop; ~/sandboxes/msb_5_5_36/start'
+alias mysql-5.5.36-restart='~/sandboxes/msb_5_5_36/stop; ~/sandboxes/msb_5_5_36/start'
 alias mysql-5.6.16='~/sandboxes/msb_5_5_36/stop; ~/sandboxes/msb_5_6_16/start'
+alias mysql-5.6.16-restart='~/sandboxes/msb_5_6_16/stop; ~/sandboxes/msb_5_6_16/start'
 
 alias redis-gree='redis-cli -p 16379 shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/gree.conf >/dev/null 2>&1 &'
 alias redis-dgame='redis-cli shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/dgame.conf >/dev/null 2>&1 &'
