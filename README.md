@@ -43,3 +43,17 @@ dotfiles
 
     $ pyenv local kemono-2.7.6
 
+* mysql sandbox
+
+> ダウンロード
+
+    $ mkdir -p ~/opt/mysql/
+TAR Archive をダウンロードする
+
+> 作成
+
+    $ tar zvxf mysql-x.x.x-***x86_64.tar.gz
+    $ mv mysql-x.x.x-***x86_64 x.x.x
+    $ make_sandbox x.x.x
+    $ do you agree? ([Y],n) y
+
