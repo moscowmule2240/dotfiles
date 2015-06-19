@@ -10,18 +10,11 @@ HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
 source /usr/local/etc/bash_completion.d/*
 
 # mysql
-export PATH=$PATH:$HOME/opt/mysql/5.5.36/bin/
-export DYLD_FALLBACK_LIBRARY_PATH=$HOME/opt/mysql/5.5.36/lib/:$DYLD_FALLBACK_LIBRARY_PATH
+export PATH=$PATH:$HOME/opt/mysql/5.6.21/bin/
+export DYLD_FALLBACK_LIBRARY_PATH=/usr/lib/:$HOME/opt/mysql/5.6.21/lib/:$DYLD_FALLBACK_LIBRARY_PATH
 
-# pyenv
-eval "$(pyenv init -)"
-
-# python
-__pyenv_ps1 ()
-{
-  local version_string=$(pyenv version | cut -d ' ' -f 1)
-  printf "($version_string) "
-}
+if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
+if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
 
 # go
 export PATH=$PATH:/usr/local/opt/go/libexec/bin
@@ -35,24 +28,36 @@ GIT_PS1_SHOWUPSTREAM=true
 GIT_PS1_SHOWCOLORHINTS=true
 source /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh
 source /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
-export PS1='\[\033[34m\]$(__pyenv_ps1)\[\033[32m\]\w\[\033[31m\]$(__git_ps1)\[\033[00m\]\$ '
+export PS1=' \[\033[32m\]\w\[\033[31m\]$(__git_ps1)\[\033[00m\]\$ '
 
 # ssh
 alias ssh="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/.ssh/config;ssh"
 alias scp="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/.ssh/config;scp"
 alias git="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/.ssh/config;git"
 
+# brew
+alias brew-update="brew cleanup;brew update;brew upgrade brew-cask"
+alias brew-cask-upgrade-all='for c in `brew cask list`; do ! brew cask info $c | grep -qF "Not installed" || brew cask install $c; done'
+# brew download path
+# /Library/Caches/Homebrew/
+
 # alias
 alias mysql-5.5.36='~/sandboxes/msb_5_6_16/stop; ~/sandboxes/msb_5_5_36/start'
 alias mysql-5.5.36-restart='~/sandboxes/msb_5_5_36/stop; ~/sandboxes/msb_5_5_36/start'
-alias mysql-5.6.16='~/sandboxes/msb_5_5_36/stop; ~/sandboxes/msb_5_6_16/start'
-alias mysql-5.6.16-restart='~/sandboxes/msb_5_6_16/stop; ~/sandboxes/msb_5_6_16/start'
+alias mysql-5.6.21='~/sandboxes/msb_5_6_21/start'
+alias mysql-5.6.21-restart='~/sandboxes/msb_5_6_21/stop; ~/sandboxes/msb_5_6_21/start'
 
 alias redis-app1='redis-cli -p 16379 shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/app1.conf >/dev/null 2>&1 &'
 alias redis-app2='redis-cli shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/app2.conf >/dev/null 2>&1 &'
 
 alias enviroment='cd ~/Workspace/vagrant/'
 
+# jenkins
+alias app2-jenkins='java -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar /usr/local/opt/jenkins/libexec/jenkins.war'
+
 # mine
 . ~/Workspace/dotfiles/dotmine/bashrc
+
+# git
+export PATH=/usr/local/bin:$PATH
 
