@@ -36,7 +36,7 @@ alias scp="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/
 alias git="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/.ssh/config;git"
 
 # brew
-alias brew-update="brew cleanup;brew update;brew upgrade brew-cask"
+alias brew-update="brew update && brew upgrade brew-cask && brew cleanup && brew cask cleanup"
 alias brew-cask-upgrade-all='for c in `brew cask list`; do ! brew cask info $c | grep -qF "Not installed" || brew cask install $c; done'
 # brew download path
 # /Library/Caches/Homebrew/
