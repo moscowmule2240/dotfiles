@@ -41,17 +41,22 @@ alias brew-cask-upgrade-all='for c in `brew cask list`; do ! brew cask info $c |
 # brew download path
 # /Library/Caches/Homebrew/
 
+# visual studio code
+code () {
+    VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $*
+}
+
 # alias
-alias mysql-5.5.36='~/sandboxes/msb_5_6_16/stop; ~/sandboxes/msb_5_5_36/start'
-alias mysql-5.5.36-restart='~/sandboxes/msb_5_5_36/stop; ~/sandboxes/msb_5_5_36/start'
 alias mysql-5.6.21='~/sandboxes/msb_5_6_21/start'
 alias mysql-5.6.21-restart='~/sandboxes/msb_5_6_21/stop; ~/sandboxes/msb_5_6_21/start'
 
-alias redis-gree='redis-cli -p 16379 shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/gree.conf >/dev/null 2>&1 &'
-alias redis-dgame='redis-cli shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/dgame.conf >/dev/null 2>&1 &'
-alias redis-punk='redis-server ~/Workspace/dotfiles/conf/redis/punk.conf >/dev/null 2>&1 &'
+alias redis-punk='redis-cli -p 16379 shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/punk.conf >/dev/null 2>&1 &'
+alias redis-punkww='redis-cli -p 6379 shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/punkww.conf >/dev/null 2>&1 &'
 
 alias enviroment='cd ~/Workspace/vagrant/'
+
+# Search Unity Port
+alias unity-port="lsof | grep Unity | grep TCP | grep LISTEN | awk '{print $9}' | cut -d ':' -f 2 | cut -d ' ' -f 1"
 
 # jenkins
 alias punk-jenkins='java -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar /usr/local/opt/jenkins/libexec/jenkins.war'
