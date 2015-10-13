@@ -46,6 +46,9 @@ code () {
     VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $*
 }
 
+# docker
+eval "$(boot2docker shellinit)"
+
 # alias
 alias mysql-5.6.21='~/sandboxes/msb_5_6_21/start'
 alias mysql-5.6.21-restart='~/sandboxes/msb_5_6_21/stop; ~/sandboxes/msb_5_6_21/start'
@@ -66,4 +69,11 @@ alias app2-jenkins='java -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar /us
 
 # git
 export PATH=/usr/local/bin:$PATH
+
+# google cloud sdk
+# The next line updates PATH for the Google Cloud SDK.
+source '/Users/eiji.satake/google-cloud-sdk/path.bash.inc'
+
+# The next line enables shell command completion for gcloud.
+source '/Users/eiji.satake/google-cloud-sdk/completion.bash.inc'
 
