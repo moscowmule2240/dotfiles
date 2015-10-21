@@ -16,3 +16,6 @@ if [ -f ~/.bashrc ] ; then
 . ~/.bashrc
 fi
 
+# mine
+. ~/Workspace/dotfiles/dotmine/profile
+
