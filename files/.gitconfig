@@ -15,4 +15,12 @@
 	default = current
 [pack]
 	threads = 2
+[merge]
+	tool = p4merge
+[mergetool]
+	keepBackup = false
+[mergetool "p4merge"]
+	path = p4merge
+	keepTemporaries = false
+	trustExitCode = false
 
