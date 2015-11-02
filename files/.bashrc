@@ -10,7 +10,7 @@ HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
 source /usr/local/etc/bash_completion.d/*
 
 # mysql
-export PATH=$PATH:$HOME/opt/mysql/5.6.21/bin/
+export PATH=$PATH:$HOME/opt/mysql/5.6.21/bin
 export DYLD_FALLBACK_LIBRARY_PATH=/usr/lib/:$HOME/opt/mysql/5.6.21/lib/:$DYLD_FALLBACK_LIBRARY_PATH
 
 if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
@@ -69,6 +69,10 @@ alias app2-jenkins='java -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar /us
 
 # git
 export PATH=/usr/local/bin:$PATH
+
+# Genymotion
+alias genymotion-adb='/opt/homebrew-cask/Caskroom/genymotion/2.5.2/Genymotion.app/Contents/MacOS/tools/adb'
+alias genymotion-screen-shot='genymotion-adb shell screencap -p /sdcard/Pictures/screenshot_`date "+%Y%m%d%H%M%S"`.png;genymotion-adb shell ls /sdcard/Pictures/* | tr "\r" " " | xargs -n 1 -I {} bash -ci "genymotion-adb pull {} ~/Pictures/genymotion/ > /dev/null";genymotion-adb shell rm /sdcard/Pictures/*'
 
 # google cloud sdk
 # The next line updates PATH for the Google Cloud SDK.
