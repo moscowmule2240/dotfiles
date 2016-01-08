@@ -36,7 +36,7 @@ alias scp="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/
 alias git="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/.ssh/config;git"
 
 # brew
-alias brew-update="brew update && brew upgrade brew-cask && brew cleanup && brew cask cleanup"
+alias brew-update="sudo chown -R $(whoami) /usr/local/bin; sudo chown -R $(whoami) /usr/local/share; sudo chown -R $(whoami) /usr/local/share/man; sudo chown -R $(whoami) /usr/local/share/man/man1; cd /usr/local/Library && git stash && git clean -d -f; brew update && brew upgrade brew-cask && brew cleanup && brew cask cleanup"
 alias brew-cask-upgrade-all='for c in `brew cask list`; do ! brew cask info $c | grep -qF "Not installed" || brew cask install $c; done'
 # brew download path
 # /Library/Caches/Homebrew/
@@ -71,7 +71,7 @@ alias app2-jenkins='java -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar /us
 export PATH=/usr/local/bin:$PATH
 
 # Genymotion
-alias genymotion-adb='/opt/homebrew-cask/Caskroom/genymotion/2.5.2/Genymotion.app/Contents/MacOS/tools/adb'
+alias genymotion-adb='/opt/homebrew-cask/Caskroom/genymotion/2.6.0/Genymotion.app/Contents/MacOS/tools/adb'
 alias genymotion-screen-shot='genymotion-adb shell screencap -p /sdcard/Pictures/screenshot_`date "+%Y%m%d%H%M%S"`.png;genymotion-adb shell ls /sdcard/Pictures/* | tr "\r" " " | xargs -n 1 -I {} bash -ci "genymotion-adb pull {} ~/Pictures/genymotion/ > /dev/null";genymotion-adb shell rm /sdcard/Pictures/*'
 
 # google cloud sdk
