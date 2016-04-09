@@ -15,7 +15,7 @@ dotfiles
     $ brew install rcmdnk/file/brew-file
     $ brew-file set_repo
     $ git@bitbucket.org:moscowmule2240/homebrew-file.git
-    $ brew file init
+    $ brew file install
 
 ## dotfiles
 
