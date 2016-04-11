@@ -49,9 +49,6 @@ code () {
     VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $*
 }
 
-# docker
-eval "$(boot2docker shellinit)"
-
 # alias
 alias mysql-5.6.21='~/sandboxes/msb_5_6_21/start'
 alias mysql-5.6.21-restart='~/sandboxes/msb_5_6_21/stop; ~/sandboxes/msb_5_6_21/start'
@@ -76,11 +73,4 @@ export PATH=/usr/local/bin:$PATH
 # Genymotion
 alias genymotion-adb='/opt/homebrew-cask/Caskroom/genymotion/2.6.0/Genymotion.app/Contents/MacOS/tools/adb'
 alias genymotion-screen-shot='genymotion-adb shell screencap -p /sdcard/Pictures/screenshot_`date "+%Y%m%d%H%M%S"`.png;genymotion-adb shell ls /sdcard/Pictures/* | tr "\r" " " | xargs -n 1 -I {} bash -ci "genymotion-adb pull {} ~/Pictures/genymotion/ > /dev/null";genymotion-adb shell rm /sdcard/Pictures/*'
-
-# google cloud sdk
-# The next line updates PATH for the Google Cloud SDK.
-source '/Users/eiji.satake/google-cloud-sdk/path.bash.inc'
-
-# The next line enables shell command completion for gcloud.
-source '/Users/eiji.satake/google-cloud-sdk/completion.bash.inc'
 
