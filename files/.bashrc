@@ -13,6 +13,7 @@ source /usr/local/etc/bash_completion.d/*
 export PATH=$PATH:$HOME/opt/mysql/5.6.21/bin
 export DYLD_FALLBACK_LIBRARY_PATH=/usr/lib/:$HOME/opt/mysql/5.6.21/lib/:$DYLD_FALLBACK_LIBRARY_PATH
 
+# pyenv
 if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
 if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
 
