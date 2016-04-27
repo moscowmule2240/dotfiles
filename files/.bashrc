@@ -32,11 +32,6 @@ alias brew-cask-upgrade-all='for c in `brew cask list`; do ! brew cask info $c |
 # brew download path
 # /Library/Caches/Homebrew/
 
-# visual studio code
-code () {
-    VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $*
-}
-
 # alias
 alias mysql-5.6.21='~/sandboxes/msb_5_6_21/start'
 alias mysql-5.6.21-restart='~/sandboxes/msb_5_6_21/stop; ~/sandboxes/msb_5_6_21/start'
