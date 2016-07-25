@@ -27,7 +27,6 @@ alias git="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/
 if [ -f $(brew --prefix)/etc/brew-wrap ];then
   source $(brew --prefix)/etc/brew-wrap
 fi
-alias brew-update="sudo chown -R $(whoami) /usr/local/bin; sudo chown -R $(whoami) /usr/local/share; sudo chown -R $(whoami) /usr/local/share/man; sudo chown -R $(whoami) /usr/local/share/man/man1; cd /usr/local/Library && git stash && git clean -d -f; brew update && brew upgrade brew-cask && brew cleanup && brew cask cleanup"
 alias brew-cask-upgrade-all='for c in `brew cask list`; do ! brew cask info $c | grep -qF "Not installed" || brew cask install $c; done'
 # brew download path
 # /Library/Caches/Homebrew/
