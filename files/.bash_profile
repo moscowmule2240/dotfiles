@@ -3,8 +3,8 @@
 
 # pyenv
 export PYENV_ROOT=/usr/local/var/pyenv
-if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
 
 # console
 function updatePrompt {
@@ -25,7 +25,7 @@ function updatePrompt {
     # Current virtualenv
     if [[ $VIRTUAL_ENV != "" ]]; then
         # Strip out the path and just leave the env name
-        PROMPT="(${VIRTUAL_ENV##*/}) ${RESET}$PROMPT"
+        PROMPT="${BLUE}(${VIRTUAL_ENV##*/}) ${RESET}$PROMPT"
     fi
 
     PS1="$PROMPT\$ "
