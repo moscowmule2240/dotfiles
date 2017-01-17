@@ -6,7 +6,8 @@ HISTSIZE=102400
 HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
 
 # bash_completion
-source /usr/local/etc/bash_completion.d/*
+[[ $PS1 && -f /usr/share/bash-completion/bash_completion ]] && \
+    . /usr/share/bash-completion/bash_completion
 
 # git
 #GIT_PS1_SHOWDIRTYSTATE=true
@@ -15,8 +16,8 @@ GIT_PS1_SHOWUNTRACKEDFILES=true
 GIT_PS1_SHOWUPSTREAM=true
 #GIT_PS1_DESCRIBE_STYLE=true
 GIT_PS1_SHOWCOLORHINTS=true
-source /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh
-source /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
+source /usr/local/etc/bash_completion.d/git-prompt.sh
+source /usr/local/etc/bash_completion.d/git-completion.bash
 
 # ssh
 alias ssh="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/.ssh/config;ssh"
@@ -32,6 +33,7 @@ alias brew-cask-update='for c in `brew cask list`; do ! brew cask info $c | grep
 # alias
 alias mysql-5.6.21='~/sandboxes/msb_5_6_21/start'
 alias mysql-5.6.21-restart='~/sandboxes/msb_5_6_21/stop; ~/sandboxes/msb_5_6_21/start'
+alias mysql-5.7.15='~/sandboxes/msb_5_7_15/start'
 
 alias redis-app1='redis-cli -p 16379 shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/app1.conf >/dev/null 2>&1 &'
 alias redis-app2='redis-cli -p 6379 shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/app2.conf >/dev/null 2>&1 &'
