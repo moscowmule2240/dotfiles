@@ -22,14 +22,11 @@ alias git="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/
 alias brew-cask-update='for c in `brew cask list`; do ! brew cask info $c | grep -qF "Not installed" || brew cask uninstall $c --force && brew cask install $c; done'
 
 # alias
-alias mysql-5.6.21='~/sandboxes/msb_5_6_21/start'
-alias mysql-5.6.21-restart='~/sandboxes/msb_5_6_21/stop; ~/sandboxes/msb_5_6_21/start'
-alias mysql-5.7.15='~/sandboxes/msb_5_7_15/start'
+alias mysqld-app1='docker start mysqld-app1'
+alias mysqld-app2='docker start mysqld-app2'
 
-alias redis-app1='redis-cli -p 16379 shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/app1.conf >/dev/null 2>&1 &'
-alias redis-app2='redis-cli -p 6379 shutdown >/dev/null 2>&1; redis-server ~/Workspace/dotfiles/conf/redis/app2.conf >/dev/null 2>&1 &'
-
-alias enviroment='cd ~/Workspace/vagrant/'
+alias redis-app1='docker start redis-app1'
+alias redis-app2='docker start redis-app2'
 
 # Search Unity Port
 alias unity-port="lsof | grep Unity | grep TCP | grep LISTEN | awk '{print $9}' | cut -d ':' -f 2 | cut -d ' ' -f 1"
@@ -43,4 +40,3 @@ alias genymotion-screen-shot='genymotion-adb shell screencap -p /sdcard/Pictures
 
 # mine
 . ~/Workspace/dotfiles/dotmine/bashrc
-
