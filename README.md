@@ -37,21 +37,25 @@ dotfiles
 
 > python install
 
-    $ pyenv install 2.7.6
+    $ pyenv install 2.7.12
 
 > 切り替え
 
-    $ pyenv local 2.7.6
+    $ pyenv local 2.7.12
 
 * pyenv-virtualenv
 
 > 仮想環境作成
 
-    $ pyenv virtualenv 2.7.6 kemono-2.7.6
+    $ pyenv virtualenv 2.7.12 default
 
-> 仮想環境選択
+> 仮想環境選択（グローバル）
 
-    $ pyenv local kemono-2.7.6
+    $ pyenv global default
+
+> 仮想環境選択（ローカル：ディレクトリ単位）
+
+    $ pyenv local default
 
 * mysql sandbox
 
