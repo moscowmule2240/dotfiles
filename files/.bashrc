@@ -21,6 +21,11 @@ alias git="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/
 # brew
 alias brew-cask-update='for c in `brew cask list`; do ! brew cask info $c | grep -qF "Not installed" || brew cask uninstall $c --force && brew cask install $c; done'
 
+# brew file
+if [ -f $(brew --prefix)/etc/brew-wrap ];then
+  source $(brew --prefix)/etc/brew-wrap
+fi
+
 # alias
 alias mysqld-app1='docker start mysqld-app1'
 alias mysqld-app2='docker start mysqld-app2'
