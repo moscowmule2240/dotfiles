@@ -57,6 +57,11 @@ dotfiles
 
     $ pyenv local default
 
+> 現在の仮想環境の確認
+
+    $ pyenv version
+    $ pyenv versions
+
 * mysql sandbox
 
 > ダウンロード
