@@ -27,11 +27,11 @@ if [ -f $(brew --prefix)/etc/brew-wrap ];then
 fi
 
 # alias
-alias mysqld-punkww='docker start mysqld-punkww'
-alias mysqld-punk='docker start mysqld-punk'
+alias mysqld-app1='docker start mysqld-app1'
+alias mysqld-app2='docker start mysqld-app2'
 
-alias redis-punkww='docker start redis-punkww'
-alias redis-punk='docker start redis-punk'
+alias redis-app1='docker start redis-app1'
+alias redis-app2='docker start redis-app2'
 
 # Search Unity Port
 alias unity-port="lsof | grep Unity | grep TCP | grep LISTEN | awk '{print $9}' | cut -d ':' -f 2 | cut -d ' ' -f 1"
