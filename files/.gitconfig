@@ -2,10 +2,7 @@
 	name = moscowmule2240
 	email = moscowmule2240@outlook.jp
 [color]
-	branch = auto
-	diff = auto
-	interactive = auto
-	status = auto
+	ui = auto
 [core]
 	excludesfile = ~/.gitignore_global
 	editor = /usr/bin/vim
@@ -15,12 +12,4 @@
 	default = current
 [pack]
 	threads = 2
-[merge]
-	tool = p4merge
-[mergetool]
-	keepBackup = false
-[mergetool "p4merge"]
-	path = p4merge
-	keepTemporaries = false
-	trustExitCode = false
 
