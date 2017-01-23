@@ -4,6 +4,10 @@
 # ls
 export LSCOLORS=gxfxcxdxbxegedabagacad
 
+# MySQL
+export PATH=$PATH:$HOME/opt/mysql/5.6.21/bin
+export DYLD_FALLBACK_LIBRARY_PATH=/usr/lib/:$HOME/opt/mysql/5.6.21/lib/:$DYLD_FALLBACK_LIBRARY_PATH
+
 # pyenv
 export PYENV_ROOT=/usr/local/var/pyenv
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1
