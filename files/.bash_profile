@@ -7,6 +7,9 @@ export LSCOLORS=gxfxcxdxbxegedabagacad
 # MySQL
 export PATH="/usr/local/opt/mysql@5.6/bin:$PATH"
 
+# Android SDK (Android Studio)
+export PATH="~/Library/Android/sdk/platform-tools:~/Library/Android/sdk/tools:$PATH"
+
 # console
 function updatePrompt {
 
