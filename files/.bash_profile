@@ -1,6 +1,9 @@
 # bash_completion
 [ -f $(brew --prefix)/etc/bash_completion ] && . $(brew --prefix)/etc/bash_completion
 
+# brew
+export PATH="/usr/local/bin:/usr/local/sbin:$PATH"
+
 # ls
 export LSCOLORS=gxfxcxdxbxegedabagacad
 
