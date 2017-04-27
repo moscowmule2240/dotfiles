@@ -45,6 +45,10 @@ export -f updatePrompt
 # Bash shell executes this function just before displaying the PS1 variable
 export PROMPT_COMMAND='updatePrompt'
 
+# rbenv
+export RBENV_ROOT=/usr/local/var/rbenv
+if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
+
 # pyenv
 export PYENV_ROOT=/usr/local/var/pyenv
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1
