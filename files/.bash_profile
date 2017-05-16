@@ -10,9 +10,6 @@ export LSCOLORS=gxfxcxdxbxegedabagacad
 # MySQL
 export PATH="/usr/local/opt/mysql@5.6/bin:$PATH"
 
-# Android SDK (Android Studio)
-export PATH="~/Library/Android/sdk/platform-tools:~/Library/Android/sdk/tools:$PATH"
-
 # console
 function updatePrompt {
 
@@ -54,6 +51,9 @@ export PYENV_ROOT=/usr/local/var/pyenv
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
 if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
+
+# android
+export ANDROID_SDK_ROOT=/usr/local/share/android-sdk
 
 # .bashrc
 test -r ~/.bashrc && . ~/.bashrc
