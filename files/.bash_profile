@@ -55,6 +55,9 @@ if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -
 # android
 export ANDROID_SDK_ROOT=/usr/local/share/android-sdk
 
+# mono
+export MONO_GAC_PREFIX="/usr/local"
+
 # .bashrc
 test -r ~/.bashrc && . ~/.bashrc
 
