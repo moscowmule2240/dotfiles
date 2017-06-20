@@ -14,7 +14,7 @@ dotfiles
     $ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     $ brew install rcmdnk/file/brew-file
     $ brew-file set_repo
-    $ git@bitbucket.org:moscowmule2240/homebrew-file.git
+    $ git@github.com:moscowmule2240/homebrew-file.git
     $ brew file install
 
 ## dotfiles
