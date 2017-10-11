@@ -58,6 +58,17 @@ export ANDROID_SDK_ROOT=/usr/local/share/android-sdk
 # mono
 export MONO_GAC_PREFIX="/usr/local"
 
+# zlib
+export CFLAGS="-I$(xcrun --show-sdk-path)/usr/include $CFLAGS"
+
+# readline
+export CFLAGS="-I$(brew --prefix readline)/include $CFLAGS"
+export LDFLAGS="-L$(brew --prefix readline)/lib $LDFLAGS"
+
+# openssl
+export CFLAGS="-I$(brew --prefix openssl)/include $CFLAGS"
+export LDFLAGS="-L$(brew --prefix openssl)/lib $LDFLAGS"
+
 # .bashrc
 test -r ~/.bashrc && . ~/.bashrc
 
