@@ -47,6 +47,9 @@ export RBENV_ROOT=/usr/local/var/rbenv
 if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
 
 # pyenv
+export CFLAGS="-I$(brew --prefix openssl)/include"
+export LDFLAGS="-L$(brew --prefix openssl)/lib -L$(brew --prefix sqlite3)/lib"
+export CPPFLAGS="-I$(brew --prefix sqlite3)/include"
 export PYENV_ROOT=/usr/local/var/pyenv
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
@@ -54,6 +57,7 @@ if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -
 
 # android
 export ANDROID_SDK_ROOT=/usr/local/share/android-sdk
+export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
 
 # mono
 export MONO_GAC_PREFIX="/usr/local"
