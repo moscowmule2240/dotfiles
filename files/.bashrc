@@ -44,7 +44,7 @@ add_middleware mysqld app2 4
 add_middleware redis app1 1
 add_middleware redis app2 1
 
-stop_middleware="docker ps -q | xargs docker stop"
+alias stop_middleware="docker ps -q | xargs docker stop"
 
 # mine
 . ~/Workspace/dotfiles/dotmine/bashrc
