@@ -1,0 +1,5 @@
+539883307 LINE
+715768417 Microsoft Remote Desktop
+823766827 OneDrive
+497799835 Xcode
+803453959 Slack
