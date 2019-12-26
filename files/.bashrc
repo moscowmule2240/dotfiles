@@ -23,9 +23,6 @@ export LDFLAGS="-L/usr/local/opt/readline/lib"
 export CPPFLAGS="-I/usr/local/opt/readline/include"
 export PKG_CONFIG_PATH="/usr/local/opt/readline/lib/pkgconfig"
 
-# brew
-alias brew-cask-update='for c in `brew cask list`; do ! brew cask info $c | grep -qF "Not installed" || brew cask uninstall $c --force && brew cask install $c; done'
-
 # brew file
 if [ -f $(brew --prefix)/etc/brew-wrap ];then
   source $(brew --prefix)/etc/brew-wrap
@@ -49,13 +46,8 @@ add_middleware mysqld app2 4
 add_middleware redis app1 1
 add_middleware redis app2 1
 
-alias stop_middleware="docker ps -q | xargs docker stop"
-
-# node
-NODEBREW_HOME=/usr/local/var/nodebrew/current
-export NODEBREW_HOME
-export NODEBREW_ROOT=/usr/local/var/nodebrew
-export PATH=$NODEBREW_HOME/bin:$PATH
+# docker
+alias kill-docker-all='if [ -n "`docker ps -q`" ]; then docker kill `docker ps -q`; fi'
 
 # mine
 . ~/Workspace/dotfiles/dotmine/bashrc
