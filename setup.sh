@@ -37,5 +37,5 @@ do
 done < ${current}/mas/default.txt
 
 # remove cache
-brew cleanup
+brew cleanup -s
 
