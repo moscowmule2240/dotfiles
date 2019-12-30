@@ -1,3 +1,6 @@
+# brew
+eval $(brew shellenv)
+
 # bash_completion
 if type brew &>/dev/null; then
   HOMEBREW_PREFIX="$(brew --prefix)"
@@ -10,14 +13,51 @@ if type brew &>/dev/null; then
   fi
 fi
 
-# brew
-export PATH="/usr/local/bin:/usr/local/sbin:$PATH"
-
 # ls
 export LSCOLORS=gxfxcxdxbxegedabagacad
 
-# MySQL
-export PATH="/usr/local/opt/mysql@5.6/bin:$PATH"
+# android
+export ANDROID_SDK_ROOT=/usr/local/share/android-sdk
+
+# mono
+export MONO_GAC_PREFIX="/usr/local"
+
+# gettext
+# For compilers to find gettext you may need to set:
+#  export LDFLAGS="-L/usr/local/opt/gettext/lib"
+#  export CPPFLAGS="-I/usr/local/opt/gettext/include"
+
+# ncurses
+# For compilers to find ncurses you may need to set:
+#  export LDFLAGS="-L/usr/local/opt/ncurses/lib"
+#  export CPPFLAGS="-I/usr/local/opt/ncurses/include"
+
+# openssl@1,1
+# For compilers to find openssl@1.1 you may need to set:
+#  export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+#  export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
+
+# protobuf@3.7
+# For compilers to find protobuf@3.7 you may need to set:
+#  export LDFLAGS="-L/usr/local/opt/protobuf@3.7/lib"
+#  export CPPFLAGS="-I/usr/local/opt/protobuf@3.7/include"
+
+# readline
+# For compilers to find readline you may need to set:
+#  export LDFLAGS="-L/usr/local/opt/readline/lib"
+#  export CPPFLAGS="-I/usr/local/opt/readline/include"
+
+# android
+export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
+
+# coreutils
+export PATH="$PATH:${HOMEBREW_PREFIX}/opt/coreutils/libexec/gnubin"
+
+# mysql
+export PATH="${HOMEBREW_PREFIX}/opt/mysql-client/bin:$PATH"
+
+# elixir
+export MANPATH=${HOMEBREW_PREFIX}/opt/erlang/lib/erlang/man:$MANPATH
 
 # console
 function updatePrompt {
@@ -50,43 +90,6 @@ export -f updatePrompt
 
 # Bash shell executes this function just before displaying the PS1 variable
 export PROMPT_COMMAND='updatePrompt'
-
-# rbenv
-export RBENV_ROOT=/usr/local/var/rbenv
-if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
-
-# pyenv
-export CFLAGS="-I$(brew --prefix openssl)/include"
-export LDFLAGS="-L$(brew --prefix openssl)/lib -L$(brew --prefix sqlite3)/lib"
-export CPPFLAGS="-I$(brew --prefix sqlite3)/include"
-export PYENV_ROOT=/usr/local/var/pyenv
-export PYENV_VIRTUALENV_DISABLE_PROMPT=1
-if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
-if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
-
-# android
-export ANDROID_SDK_ROOT=/usr/local/share/android-sdk
-export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
-
-# mono
-export MONO_GAC_PREFIX="/usr/local"
-
-# zlib
-export CFLAGS="-I$(xcrun --show-sdk-path)/usr/include $CFLAGS"
-
-# readline
-export CFLAGS="-I$(brew --prefix readline)/include $CFLAGS"
-export LDFLAGS="-L$(brew --prefix readline)/lib $LDFLAGS"
-
-# openssl
-export CFLAGS="-I$(brew --prefix openssl)/include $CFLAGS"
-export LDFLAGS="-L$(brew --prefix openssl)/lib $LDFLAGS"
-
-# coreutils
-export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
-
-# elixir
-export MANPATH=/usr/local/opt/erlang/lib/erlang/man:$MANPATH
 
 # asdf
 . $(brew --prefix asdf)/asdf.sh
