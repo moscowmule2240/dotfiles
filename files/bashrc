@@ -20,6 +20,3 @@ alias git="cat ~/.ssh/conf.d/config ~/Workspace/dotfiles/dotmine/ssh/config > ~/
 
 # docker
 alias kill-docker-all='if [ -n "`docker ps -q`" ]; then docker kill `docker ps -q`; fi'
-
-# mine
-. ~/Workspace/dotfiles/dotmine/bashrc
