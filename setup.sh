@@ -11,6 +11,14 @@ for file in ${current}/files/.*; do
   fi
 done
 
+# .file macos
+for file in ${current}/files/macos/.*; do
+  file_name=${file##*/}
+  if [ ${file_name} != "." ] && [ ${file_name} != ".." ]; then
+    echo "execute ln -s ${file} ~/${file_name}"
+  fi
+done
+
 # reload
 source ~/.bash_profile
 
