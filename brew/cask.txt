@@ -1,7 +1,7 @@
 android-sdk
+android-studio
 appcleaner
 charles
-chrome-remote-desktop-host
 cyberduck
 discord
 docker
@@ -11,11 +11,12 @@ google-japanese-ime
 iterm2
 java
 jd-gui
-kitematic
+mono-mdk
 mysqlworkbench
+postman
 pycharm
 sequel-pro
-teamsql
+slack
 unity-hub
 visual-studio-code
 visual-studio
