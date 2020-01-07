@@ -96,4 +96,3 @@ export PROMPT_COMMAND='updatePrompt'
 
 # .bashrc
 test -r ~/.bashrc && . ~/.bashrc
-

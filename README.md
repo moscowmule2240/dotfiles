@@ -1,29 +1,30 @@
-dotfiles
-========
+# dotfiles
 
-## Command Line Tools
+## MacOS
 
-> Install
+### Command Line Tools
+
+#### Install
 
     $ xcode-select --install
 
-## Homebrew
+### Homebrew
 
-> Install
+#### Install
 
     $ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     $ sudo mkdir -p $(brew --prefix)/Frameworks
     $ sudo chown -R $(whoami) $(brew --prefix)/Frameworks
 
-## dotfiles
+### dotfiles
 
-> Install
+#### Install
 
     $ ./setup.sh
 
-## bash
+### bash
 
-> Setup
+#### Setup
 
     $ sudo vi /etc/shells
     $ add line `/usr/local/bin/bash`
