@@ -29,3 +29,9 @@
     $ sudo vi /etc/shells
     $ add line `/usr/local/bin/bash`
     $ chsh -s /usr/local/bin/bash
+
+## Windows
+
+#### Install
+
+    $ ./setup.bat
