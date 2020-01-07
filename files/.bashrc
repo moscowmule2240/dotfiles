@@ -23,4 +23,3 @@ alias kill-docker-all='if [ -n "`docker ps -q`" ]; then docker kill `docker ps -
 
 # mine
 . ~/Workspace/dotfiles/dotmine/bashrc
-
