@@ -8,6 +8,7 @@
 	editor = /usr/bin/vim
 	quotepath = false
 	precomposeunicode = true
+	autocrlf = input
 [push]
 	default = current
 [pack]
