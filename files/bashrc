@@ -1,6 +1,3 @@
-# ls
-alias ls='ls -G'
-
 # history
 HISTSIZE=102400
 HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
