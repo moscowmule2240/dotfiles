@@ -11,6 +11,10 @@ for file in ${current}/files/.*; do
   fi
 done
 
+# .ssh dotmine
+echo "execute ln -s ${current}/dotmine/ssh/authorized_keys ~/.ssh/authorized_keys"
+ln -s ${current}/dotmine/ssh/authorized_keys ~/.ssh/authorized_keys
+
 # reload
 source ~/.bash_profile
 
