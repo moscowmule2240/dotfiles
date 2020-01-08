@@ -28,9 +28,11 @@ nosetests.xml
 # Translations
 *.mo
 
+# direnv
+.envrc
+
 # Mr Developer
 .mr.developer.cfg
 .project
 .pydevproject
 .idea
-.virtualenv

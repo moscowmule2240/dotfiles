@@ -59,40 +59,25 @@ export PATH="${HOMEBREW_PREFIX}/opt/mysql-client/bin:$PATH"
 # elixir
 export MANPATH=${HOMEBREW_PREFIX}/opt/erlang/lib/erlang/man:$MANPATH
 
-# console
-function updatePrompt {
+# pyenv
+eval "$(pyenv init -)"
 
-    # Styles
-    GREEN='\[\e[0;32m\]'
-    BLUE='\[\e[0;34m\]'
-    RED='\[\e[0;31m\]'
-    LIGHT_RED='\[\e[1;31m\]'
-    YELLOW='\[\e[1;33m\]'
-    RESET='\[\e[0m\]'
+# pipenv
+export PIPENV_IGNORE_VIRTUALENVS=1
+eval "$(pipenv --completion)"
 
-    # Base prompt: \W = working dir
-    PROMPT="\W"
-
-    # Current Git repo
-    if type "__git_ps1" > /dev/null 2>&1; then
-        PROMPT="${YELLOW}$PROMPT${RESET}$(__git_ps1 "${GREEN} (%s)${RESET}")"
-    fi
-
-    # Current virtualenv
-    if [[ $VIRTUAL_ENV != "" ]]; then
-        # Strip out the path and just leave the env name
-        PROMPT="${BLUE}(${VIRTUAL_ENV##*/}) ${RESET}$PROMPT"
-    fi
-
-    PS1="$PROMPT\$ "
-}
-export -f updatePrompt
-
-# Bash shell executes this function just before displaying the PS1 variable
-export PROMPT_COMMAND='updatePrompt'
+# direnv
+export EDITOR=vim
+eval "$(direnv hook bash)"
 
 # asdf
 . $(brew --prefix asdf)/asdf.sh
+
+# git
+if [ -f "$(brew --prefix)/opt/bash-git-prompt/share/gitprompt.sh" ]; then
+  __GIT_PROMPT_DIR="$(brew --prefix)/opt/bash-git-prompt/share"
+  source "$(brew --prefix)/opt/bash-git-prompt/share/gitprompt.sh"
+fi
 
 # .bashrc
 test -r ~/.bashrc && . ~/.bashrc
