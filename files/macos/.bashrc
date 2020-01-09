@@ -2,7 +2,7 @@
 alias ls='ls -G'
 
 # less
-export LESS='-R'
+export LESS="--no-init --quit-if-one-screen --raw-control-chars"
 export LESSOPEN='| /usr/local/bin/src-hilite-lesspipe.sh %s'
 
 # ssh
