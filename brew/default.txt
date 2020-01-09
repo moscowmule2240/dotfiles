@@ -15,6 +15,7 @@ pipenv
 pstree
 pyenv
 redis
+source-highlight
 the_silver_searcher
 tree
 watch
