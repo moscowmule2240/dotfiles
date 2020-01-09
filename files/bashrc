@@ -2,5 +2,8 @@
 HISTSIZE=102400
 HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
 
+# grep
+alias grep='grep --color=always'
+
 # docker
 alias kill-docker-all='if [ -n "`docker ps -q`" ]; then docker kill `docker ps -q`; fi'
