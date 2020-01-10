@@ -40,11 +40,6 @@ export MONO_GAC_PREFIX="/usr/local"
 #  export LDFLAGS="-L/usr/local/opt/readline/lib"
 #  export CPPFLAGS="-I/usr/local/opt/readline/include"
 
-# asdf for poetry
-if [ -z "${ASDF_DIR}" ]; then
-  . $(brew --prefix asdf)/asdf.sh
-fi
-
 # direnv
 export EDITOR=vim
 eval "$(direnv hook bash)"
