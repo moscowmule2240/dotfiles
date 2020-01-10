@@ -11,9 +11,7 @@ jq
 mas
 mysql-client
 openssl@1.1
-pipenv
 pstree
-pyenv
 redis
 source-highlight
 the_silver_searcher
