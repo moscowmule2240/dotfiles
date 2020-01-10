@@ -41,7 +41,6 @@ export MONO_GAC_PREFIX="/usr/local"
 #  export CPPFLAGS="-I/usr/local/opt/readline/include"
 
 # asdf for poetry
-echo "${ASDF_DIR}"
 if [ -z "${ASDF_DIR}" ]; then
   . $(brew --prefix asdf)/asdf.sh
 fi
