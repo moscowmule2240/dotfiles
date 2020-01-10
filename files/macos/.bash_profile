@@ -24,13 +24,6 @@ export PATH="${HOMEBREW_PREFIX}/opt/mysql-client/bin:$PATH"
 # elixir
 export MANPATH=${HOMEBREW_PREFIX}/opt/erlang/lib/erlang/man:$MANPATH
 
-# pyenv
-eval "$(pyenv init -)"
-
-# pipenv
-export PIPENV_IGNORE_VIRTUALENVS=1
-eval "$(pipenv --completion)"
-
 # asdf
 . $(brew --prefix asdf)/asdf.sh
 
