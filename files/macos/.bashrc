@@ -42,7 +42,7 @@ export MONO_GAC_PREFIX="/usr/local"
 
 # direnv
 export EDITOR=vim
-eval "$(direnv hook bash)"
+eval "$(asdf exec direnv hook bash)"
 
 # git
 if [ -f "$(brew --prefix)/opt/bash-git-prompt/share/gitprompt.sh" ]; then
