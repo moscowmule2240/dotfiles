@@ -41,6 +41,7 @@ export MONO_GAC_PREFIX="/usr/local"
 #  export CPPFLAGS="-I/usr/local/opt/readline/include"
 
 # direnv
+export DIRENV_WARN_TIMEOUT=100s
 export EDITOR=vim
 eval "$(asdf exec direnv hook bash)"
 

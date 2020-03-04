@@ -17,6 +17,7 @@ postman
 pycharm
 sequel-pro
 slack
+stoplight-studio
 unity-hub
 visual-studio-code
 visual-studio

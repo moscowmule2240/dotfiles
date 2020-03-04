@@ -1,5 +1,7 @@
+amazon-ecs-cli
 apktool
 asdf
+awscli
 bash
 bash-completion
 bash-git-prompt
@@ -9,6 +11,7 @@ git-lfs
 htop
 jq
 mas
+minikube
 mysql-client
 openssl@1.1
 pstree
