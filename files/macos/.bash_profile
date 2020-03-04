@@ -12,6 +12,9 @@ if type brew &>/dev/null; then
   fi
 fi
 
+# rust
+export PATH="~/.cargo/bin:$PATH"
+
 # android
 export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
 

@@ -3,6 +3,7 @@ shopt -s histappend
 shopt -s histverify
 HISTSIZE=102400
 HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
+export PROMPT_COMMAND="history -a; history -c; history -r; $PROMPT_COMMAND"
 
 # grep
 alias grep='grep --color=always'
