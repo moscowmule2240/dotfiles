@@ -28,10 +28,6 @@ nosetests.xml
 # Translations
 *.mo
 
-# env
-.tool-versions
-.envrc
-
 # Mr Developer
 .mr.developer.cfg
 .project
