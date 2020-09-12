@@ -15,6 +15,7 @@ mas
 minikube
 mysql-client
 openssl@1.1
+poetry
 pstree
 redis
 source-highlight
