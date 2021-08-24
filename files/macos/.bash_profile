@@ -30,9 +30,6 @@ export MANPATH=${HOMEBREW_PREFIX}/opt/erlang/lib/erlang/man:$MANPATH
 # asdf
 . $(brew --prefix asdf)/asdf.sh
 
-# poetry
-export PATH="$HOME/.asdf/installs/poetry/1.0.10/bin:$PATH"
-
 # .bashrc
 test -r ~/.bashrc && . ~/.bashrc
 
