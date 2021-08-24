@@ -11,4 +11,4 @@ alias grep='grep --color=always'
 # docker
 export COMPOSE_HTTP_TIMEOUT=300
 alias kill-docker-all='if [ -n "`docker ps -q`" ]; then docker kill `docker ps -q`; fi'
-alias destory-docker-all='docker container rm `docker container ls -aq`; docker volume rm `docker volume ls -q`; docker network rm `docker network ls -q`; docker image rm -f `docker images -aq`i'
+alias destory-docker-all='docker container rm `docker container ls -aq`; docker volume rm `docker volume ls -q`; docker network rm `docker network ls -q`; docker image rm -f `docker images -aq`; docker builder prune --force'
