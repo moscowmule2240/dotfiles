@@ -9,8 +9,8 @@ firefox
 google-chrome
 google-japanese-ime
 iterm2
-java
 jd-gui
+kindle
 mysqlworkbench
 postman
 pycharm
@@ -18,5 +18,5 @@ slack
 stoplight-studio
 unity-hub
 visual-studio-code
-visual-studio
 vlc
+zoom

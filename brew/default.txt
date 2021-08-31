@@ -1,18 +1,14 @@
-amazon-ecs-cli
 apktool
 asdf
 awscli
-bash
-bash-completion
-bash-git-prompt
 direnv
 dockerize
 git
 git-lfs
 htop
 jq
+liquidprompt
 mas
-minikube
 mysql-client
 openssl@1.1
 poetry
@@ -22,3 +18,6 @@ source-highlight
 the_silver_searcher
 tree
 watch
+zsh
+zsh-completions
+zsh-git-prompt
