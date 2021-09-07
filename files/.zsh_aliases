@@ -1,14 +1,16 @@
-# history
-shopt -s histappend
-shopt -s histverify
-HISTSIZE=102400
-HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
-export PROMPT_COMMAND="history -a; history -c; history -r; $PROMPT_COMMAND"
+# ls
+alias ls="ls -GF"
+alias gls="gls --color"
 
-# grep
-alias grep='grep --color=always'
+# ssh
+concat_ssh_config="cat $HOME/.ssh/conf.d/* > $HOME/.ssh/config"
+eval ${concat_ssh_config}
+alias ssh="eval ${concat_ssh_config};ssh"
+alias scp="eval ${concat_ssh_config};scp"
 
 # docker
-export COMPOSE_HTTP_TIMEOUT=300
 alias kill-docker-all='if [ -n "`docker ps -q`" ]; then docker kill `docker ps -q`; fi'
 alias destory-docker-all='docker container rm `docker container ls -aq`; docker volume rm `docker volume ls -q`; docker network rm `docker network ls -q`; docker image rm -f `docker images -aq`; docker builder prune --force'
+
+# mine
+. $HOME/Workspace/dotfiles/dotmine/files/.zsh_aliases
