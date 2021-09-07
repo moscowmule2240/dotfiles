@@ -1,48 +1,33 @@
-#!/bin/sh
-
-current=`pwd`;
+#!/bin/bash
 
 # .file
-for file in ${current}/files/.*; do
+for file in ${PWD}/files/.*; do
   file_name=${file##*/}
   if [ ${file_name} != "." ] && [ ${file_name} != ".." ]; then
-    echo "execute ln -s ${file} ~/${file_name}"
-    ln -s ${file} ~/${file_name}
+    echo "execute ln -s ${file} $HOME/${file_name}"
+    ln -s ${file} $HOME/${file_name}
   fi
 done
 
-# .file macos
-for file in ${current}/files/macos/.*; do
-  file_name=${file##*/}
-  if [ ${file_name} != "." ] && [ ${file_name} != ".." ]; then
-    echo "execute ln -s ${file} ~/${file_name}"
-  fi
-done
+# ssh
+mkdir -p $HOME/.ssh/conf.d
+ln -s $PWD/files/ssh/conf.d/config $HOME/.ssh/conf.d/config
 
 # reload
-source ~/.bash_profile
+. $HOME/.zprofile
 
 # brew
-while read application
-do
-  echo $ brew reinstall ${application}
-  brew reinstall ${application}
-done < ${current}/brew/default.txt
+cat ${PWD}/brew/default.txt | xargs -L 1 -P 1 brew reinstall
 
 # brew cask
-while read application
-do
-  echo $ brew cask reinstall ${application}
-  brew cask reinstall ${application}
-done < ${current}/brew/cask.txt
+if [ "$(uname)" == 'Darwin' ]; then
+  cat ${PWD}/brew/cask.txt | xargs -L 1 -P 1 brew install --cask --force 
+fi
 
 # appstore
-while read application
-do
-  id=$(awk '{print $1}' <<< ${application})
-  echo $ mas install ${id}
-  mas install ${id}
-done < ${current}/mas/default.txt
+if [ "$(uname)" == 'Darwin' ]; then
+  cat ${PWD}/mas/default.txt | xargs -L 1 -P 1 mas install
+fi
 
 # remove cache
 brew cleanup -s

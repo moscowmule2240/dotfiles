@@ -10,11 +10,10 @@ Host *
   ServerAliveCountMax 120
   TCPKeepAlive yes
 
-  IdentityFile ~/Workspace/dotfiles/dotmine/ssh/default/id_rsa
   ForwardAgent yes
 
   SendEnv LANG LC_*
 
-Host *
-  IdentityFile ~/Workspace/dotfiles/dotmine/ssh/default-no-passphrase/id_rsa
-
+  ControlPath /tmp/master-%r@%h:%p
+  ControlMaster auto
+  ControlPersist 1h
