@@ -44,7 +44,7 @@ fi
 . "$(brew --prefix zsh-git-prompt)/zshrc.sh"
 
 # less
-export LESS=' -X -R '
+export LESS=' -X -R -F '
 export LESSOPEN='| $(brew --prefix)/bin/src-hilite-lesspipe.sh %s'
 
 # history
