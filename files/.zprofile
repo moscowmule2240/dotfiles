@@ -24,7 +24,7 @@ if [ "$(uname)" = 'Darwin' ]; then
         eval $(/opt/homebrew/bin/brew shellenv)
     fi
 else
-    eval "$($HOME/.linuxbrew/bin/brew shellenv)"
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
 # liquidprompt

@@ -37,28 +37,20 @@
 
 ### WSL (Windows Subsystem for Linux)
 
-#### Download
-    https://docs.microsoft.com/ja-jp/windows/wsl/install-manual
-
 #### Install (PowerShell)
-    $ move .\Ubuntu_2004.2020.424.0_x64.appx .\Ubuntu_2004.2020.424.0_x64.zip
-    $ Expand-Archive .\Ubuntu_2004.2020.424.0_x64.zip
-    $ wsl.exe --import Ubuntu-20.04 D:\Applications\Ubuntu-20.04 .\Ubuntu_2004.2020.424.0_x64\install.tar.gz
+    $ wsl --install -d Ubuntu
 
 #### Config (Ubuntu)
-    $ apt update && sudo apt upgrade
-    $ passwd root
-    $ adduser administrator
-    $ usermod -aG sudo administrator
-    $ echo -e "[user]\ndefault=administrator\n[interop]\nappendWindowsPath=false" > /etc/wsl.conf
+    $ sudo apt update && sudo apt upgrade
+    $ sudo sh -c "echo '[interop]\nappendWindowsPath=false' > /etc/wsl.conf"
 
 #### Restart (PowerShell)
-    $ wsl.exe --terminate Ubuntu-20.04
+    $ wsl --terminate Ubuntu
 
 #### Config (Windows Terminal)
 「設定」→「ディレクトリの開始」
 
-    \\wsl$\Ubuntu-20.04\home\administrator
+    \\wsl$\Ubuntu\home\administrator
 
 ### Homebrew
 
@@ -67,7 +59,7 @@
     $ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
     # brew next step
-    $ eval "$(/home/administrator/.linuxbrew/bin/brew shellenv)"
+    $ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     $ sudo apt-get install build-essential
     $ brew install gcc
 
