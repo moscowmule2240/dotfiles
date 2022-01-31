@@ -40,6 +40,10 @@
 #### Install (PowerShell)
     $ wsl --install -d Ubuntu
 
+    Enter new UNIX username: administrator
+    New password: any
+    Retype new password: any
+
 #### Config (Ubuntu)
     $ sudo apt update && sudo apt upgrade
     $ sudo sh -c "echo '[interop]\nappendWindowsPath=false' > /etc/wsl.conf"
