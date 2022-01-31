@@ -83,3 +83,10 @@ export MONO_GAC_PREFIX=$(brew --prefix)
 
 # docker
 export COMPOSE_HTTP_TIMEOUT=300
+
+# python install (ubuntu)
+if [ "$(uname)" != 'Darwin' ]; then
+    export CPPFLAGS="-I$(brew --prefix libffi)/include -I$(brew --prefix zlib)/include -I$(brew --prefix bzip2)/include -I$(brew --prefix sqlite)/include -I$(brew --prefix zstd)/include"
+    export LDFLAGS="-L$(brew --prefix libffi)/lib -L$(brew --prefix zlib)/lib -L$(brew --prefix bzip2)/lib -L$(brew --prefix sqlite)/lib -L$(brew --prefix zstd)/lib"
+    export CONFIGURE_OPTS="--with-openssl=$(brew --prefix openssl)"
+fi
