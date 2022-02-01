@@ -82,3 +82,8 @@
 
 ### ssh
     # chmod 600 ~/.ssh/config
+
+### %USERPROFILE%\.ssh
+    $ mklink %USERPROFILE%\.ssh\config \\wsl$\Ubuntu\home\administrator\.ssh\config
+    $ mklink %USERPROFILE%\.ssh\known_hosts %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\known_hosts
+    $ mklink /D %USERPROFILE%\.ssh\keys %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\keys

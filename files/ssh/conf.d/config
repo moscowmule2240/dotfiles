@@ -17,3 +17,4 @@ Host *
   ControlPath /tmp/master-%r@%h:%p
   ControlMaster auto
   ControlPersist 1h
+
