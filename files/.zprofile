@@ -8,6 +8,9 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
+# zsh
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+
 # ls
 autoload -U compinit
 compinit
