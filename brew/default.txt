@@ -1,7 +1,6 @@
 apktool
 asdf
 awscli
-direnv
 dockerize
 git
 git-lfs

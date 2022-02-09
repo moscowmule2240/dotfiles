@@ -1,6 +1,7 @@
 android-sdk
 android-studio
 appcleaner
+bitwarden
 charles
 cyberduck
 discord

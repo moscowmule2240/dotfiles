@@ -2,6 +2,9 @@
 
 ## MacOS
 
+### Rosetta (For Apple Silicon)
+    $ softwareupdate --install-rosetta --agree-to-license
+
 ### Command Line Tools
 
 #### Install
@@ -14,6 +17,10 @@
 
     $ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
+#### Install (For Apple Silicon)
+
+    $ arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
 ### zsh
     $ brew install zsh
     $ command -v zsh | sudo tee -a /etc/shells
@@ -25,13 +32,8 @@
 
     $ ./setup.sh
 
-### bash
-
-#### Setup
-
-    $ sudo vi /etc/shells
-    $ add line `/usr/local/bin/bash`
-    $ chsh -s /usr/local/bin/bash
+### login shell
+「設定」->「ユーザとグループ」->「ユーザ名」右クリック->「詳細オプション」->「ログインシェル」変更 `/opt/homebrew/bin/zsh`
 
 ### Windows
 
