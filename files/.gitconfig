@@ -20,3 +20,5 @@
 	clean = git-lfs clean -- %f
 [merge]
 	renameLimit = 999999
+[diff]
+	indentHeuristic = true
