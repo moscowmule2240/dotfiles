@@ -58,7 +58,7 @@ setopt hist_reduce_blanks
 setopt hist_no_store
 
 # asdf
-. $(brew --prefix asdf)/asdf.sh
+. $(brew --prefix asdf)/libexec/asdf.sh
 
 # direnv
 export DIRENV_WARN_TIMEOUT=100s
