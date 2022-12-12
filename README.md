@@ -35,7 +35,7 @@
 ### login shell
 「設定」->「ユーザとグループ」->「ユーザ名」右クリック->「詳細オプション」->「ログインシェル」変更 `/opt/homebrew/bin/zsh`
 
-### Windows
+## Windows
 
 ### WSL (Windows Subsystem for Linux)
 
@@ -83,9 +83,10 @@
     $ ./setup.sh
 
 ### ssh
-    # chmod 600 ~/.ssh/config
+    $ chmod 600 ~/.ssh/config
 
-### %USERPROFILE%\.ssh
+### %USERPROFILE%
+    $ mklink /D %USERPROFILE%\Workspace\dotfiles %USERPROFILE%\dotfiles (ssh permissions)
     $ mklink %USERPROFILE%\.ssh\config \\wsl$\Ubuntu\home\administrator\.ssh\config
     $ mklink %USERPROFILE%\.ssh\known_hosts %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\known_hosts
     $ mklink /D %USERPROFILE%\.ssh\keys %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\keys
