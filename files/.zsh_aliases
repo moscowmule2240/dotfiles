@@ -8,6 +8,9 @@ eval ${concat_ssh_config}
 alias ssh="eval ${concat_ssh_config};ssh"
 alias scp="eval ${concat_ssh_config};scp"
 
+# git
+alias git-reset='git checkout . && git clean -fd && git fetch -p && git pull -r && git submodule update -i -r'
+
 # docker
 alias kill-docker-all='if [ -n "`docker ps -q`" ]; then docker kill `docker ps -q`; fi'
 alias destory-docker-all='docker container rm `docker container ls -aq`; docker volume rm `docker volume ls -q`; docker network rm `docker network ls -q`; docker image rm -f `docker images -aq`; docker builder prune --force'
