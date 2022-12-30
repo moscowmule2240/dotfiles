@@ -33,4 +33,4 @@ fi
 brew cleanup -s
 
 # dotmine
-sh dotmine/setup.sh
+bash dotmine/setup.sh

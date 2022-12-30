@@ -90,3 +90,99 @@
     $ mklink %USERPROFILE%\.ssh\config \\wsl$\Ubuntu\home\administrator\.ssh\config
     $ mklink %USERPROFILE%\.ssh\known_hosts %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\known_hosts
     $ mklink /D %USERPROFILE%\.ssh\keys %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\keys
+
+## VPS
+
+### Upgrade
+    $ sudo apt update
+    $ sudo apt list --upgradable
+    $ sudo apt upgrade
+
+### User
+    $ sudo adduser administrator
+
+### Sudo
+    $ sudo gpasswd -a administrator sudo
+
+### Change User
+    $ su administrator
+    $ cd
+
+### Homebrew
+
+#### Install
+    $ sudo apt install git
+
+    $ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    # brew next step
+    $ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    $ sudo apt-get install build-essential
+    $ brew install gcc
+
+### Workspace
+    $ mkdir Workspace
+
+### zsh
+    $ brew install zsh
+    $ command -v zsh | sudo tee -a /etc/shells
+    $ chsh -s $(command -v zsh)
+
+### dotfiles
+
+#### Install
+    $ ./setup.sh
+
+### ssh
+    $ chmod 600 ~/.ssh/config
+
+#### config
+    $ sudo vi /etc/ssh/sshd_config.d/sshd.config
+
+    PasswordAuthentication no
+    ClientAliveInterval 60
+    ClientAliveCountMax 30
+    PermitRootLogin no
+
+### Wine
+    $ mkdir /home/administrator/Workspace/wine
+    $ cd /home/administrator/Workspace/wine
+
+    $ dpkg --add-architecture i386
+    $ wget -nc https://dl.winehq.org/wine-builds/winehq.key
+    $ apt-key add winehq.key
+    $ apt-add-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ bionic main'
+    $ wget https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_22.04/Release.key
+    $ apt-key add Release.key
+    $ apt-add-repository 'deb https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_22.04/ ./'
+    $ apt update
+    $ apt install --install-recommends winehq-stable
+
+### Localize
+    $ apt -y install language-pack-ja-base language-pack-ja ibus-mozc
+    $ localectl set-locale LANG=ja_JP.UTF-8 LANGUAGE="ja_JP:ja"
+    $ source /etc/default/locale
+    $ timedatectl set-timezone Asia/Tokyo
+
+### Ubuntu Mate
+    $ apt-get install xrdp
+    $ apt install tasksel
+    $ tasksel
+    $ sudo tasksel install mate-desktop
+      select -> [lightdm]
+    $ reboot
+
+### Fonts
+    $ scp /mnt/c/Windows/Fonts/msgothic.ttc moscowmule2240-ea.myddns.me:~/.wine/drive_c/windows/Fonts/
+    $ scp /mnt/c/Windows/Fonts/webdings.ttf moscowmule2240-ea.myddns.me:~/.wine/drive_c/windows/Fonts/
+    $ scp /mnt/c/Windows/Fonts/wingding.ttf moscowmule2240-ea.myddns.me:~/.wine/drive_c/windows/Fonts/
+    $ reboot
+
+### EA
+
+#### Install
+    $ wget -nc https://download.mql5.com/cdn/web/tradexfin.limited/mt4/xmtrading4setup.exe
+    「Wine Windowsプログラムローダーで開く」をクリック
+
+#### EA
+    $ cp ~/Workspace/MT4/grandia.ex4 ~/.wine/drive_c/Program\ Files\ \(x86\)/XMTrading\ MT4/MQL4/Experts/
