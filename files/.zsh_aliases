@@ -15,5 +15,8 @@ alias git-reset='git checkout . && git clean -fd && git fetch -p && git pull -r 
 alias kill-docker-all='if [ -n "`docker ps -q`" ]; then docker kill `docker ps -q`; fi'
 alias destory-docker-all='docker container rm `docker container ls -aq`; docker volume rm `docker volume ls -q`; docker network rm `docker network ls -q`; docker image rm -f `docker images -aq`; docker builder prune --force'
 
+# mitmproxy
+alias mitmproxy-setting='sudo sysctl -w net.inet.ip.forwarding=1; sudo pfctl -f pf.conf; sudo pfctl -e'
+
 # mine
 . $HOME/Workspace/dotfiles/dotmine/files/.zsh_aliases

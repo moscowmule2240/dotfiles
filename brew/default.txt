@@ -9,8 +9,7 @@ jq
 liquidprompt
 mas
 mysql-client
-openssl@1.1
-poetry
+openssl
 pstree
 redis
 source-highlight
