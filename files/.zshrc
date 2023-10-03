@@ -139,3 +139,4 @@ fi
 # shopt -s histverify
 HISTSIZE=102400
 HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
+
