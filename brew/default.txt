@@ -1,3 +1,9 @@
+bzip2
+libffi
+openssl
+sqlite
+zlib
+zstd
 apktool
 asdf
 awscli
