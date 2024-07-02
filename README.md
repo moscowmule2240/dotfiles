@@ -85,11 +85,12 @@
 ### ssh
     $ chmod 600 ~/.ssh/config
 
-### %USERPROFILE%
-    $ mklink /D %USERPROFILE%\Workspace\dotfiles %USERPROFILE%\dotfiles (ssh permissions)
-    $ mklink %USERPROFILE%\.ssh\config \\wsl$\Ubuntu\home\administrator\.ssh\config
-    $ mklink %USERPROFILE%\.ssh\known_hosts %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\known_hosts
-    $ mklink /D %USERPROFILE%\.ssh\keys %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\keys
+### Command Prompt
+    $ mkdir %USERPROFILE%\.ssh
+    $ mklink %USERPROFILE%\.ssh\id_ed25519 %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\keys\default\id_ed25519
+    $ mklink %USERPROFILE%\.ssh\id_ed25519.pub %USERPROFILE%\Workspace\dotfiles\dotmine\ssh\keys\default\id_ed25519.pub
+    $ mklink %USERPROFILE%\.gitconfig %USERPROFILE%\Workspace\dotfiles\files\.gitconfig
+    $ mklink %USERPROFILE%\.gitignore_global %USERPROFILE%\Workspace\dotfiles\files\.gitignore_global
 
 ## VPS
 
