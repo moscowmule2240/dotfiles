@@ -15,7 +15,6 @@ jq
 liquidprompt
 mas
 mysql-client
-openssl
 pstree
 redis
 source-highlight
