@@ -9,7 +9,7 @@ alias ssh="eval ${concat_ssh_config};ssh"
 alias scp="eval ${concat_ssh_config};scp"
 
 # git
-alias git-reset='git checkout . && git clean -fd && git fetch -p && git pull -r && git submodule update -i -r'
+alias git-reset='git checkout . && git clean -fd && git reset --hard && git fetch -p && git pull -r && git submodule update -i -r'
 
 # docker
 alias kill-docker-all='if [ -n "`docker ps -q`" ]; then docker kill `docker ps -q`; fi'
