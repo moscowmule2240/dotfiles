@@ -9,6 +9,7 @@
 	quotepath = false
 	precomposeunicode = true
 	autocrlf = input
+	symlinks = true
 [push]
 	default = current
 [pack]
