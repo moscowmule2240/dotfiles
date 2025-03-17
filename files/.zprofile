@@ -85,12 +85,12 @@ export MONO_GAC_PREFIX=$(brew --prefix)
 export COMPOSE_HTTP_TIMEOUT=300
 
 # python install
-export LDFLAGS="-L$(brew --prefix libffi)/lib -L$(brew --prefix zlib)/lib -L$(brew --prefix bzip2)/lib -L$(brew --prefix sqlite)/lib -L$(brew --prefix zstd)/lib -L$(brew --prefix openssl)/lib -L$(brew --prefix mysql-client)/lib"
-export CPPFLAGS="-I$(brew --prefix libffi)/include -I$(brew --prefix zlib)/include -I$(brew --prefix bzip2)/include -I$(brew --prefix sqlite)/include -I$(brew --prefix zstd)/include -I$(brew --prefix openssl)/include -I$(brew --prefix mysql-client)/include"
+BREW_FORMULAE_MYSQL="mysql-client@8.0"
+export LDFLAGS="-L$(brew --prefix libffi)/lib -L$(brew --prefix zlib)/lib -L$(brew --prefix bzip2)/lib -L$(brew --prefix sqlite)/lib -L$(brew --prefix zstd)/lib -L$(brew --prefix openssl)/lib -L$(brew --prefix ${BREW_FORMULAE_MYSQL})/lib"
+export CPPFLAGS="-I$(brew --prefix libffi)/include -I$(brew --prefix zlib)/include -I$(brew --prefix bzip2)/include -I$(brew --prefix sqlite)/include -I$(brew --prefix zstd)/include -I$(brew --prefix openssl)/include -I$(brew --prefix ${BREW_FORMULAE_MYSQL})/include"
 export CONFIGURE_OPTS="--with-openssl=$(brew --prefix openssl)"
-export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
-
-MYSQL_VERSION=`ls -la $(brew --prefix mysql-client) | awk '{print $11}' | awk -F "/" '{print $4}'`
-export MYSQLCLIENT_LDFLAGS="-L${HOMEBREW_CELLAR}/mysql-client/${MYSQL_VERSION}/lib -lmysqlclient"
-export MYSQLCLIENT_CFLAGS="-I${HOMEBREW_CELLAR}/mysql-client/${MYSQL_VERSION}/include/mysql"
+export PKG_CONFIG_PATH="$(brew --prefix ${BREW_FORMULAE_MYSQL})/lib/pkgconfig"
+MYSQL_VERSION=`ls -la $(brew --prefix ${BREW_FORMULAE_MYSQL}) | awk '{print $11}' | awk -F "/" '{print $4}'`
+export MYSQLCLIENT_LDFLAGS="-L${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_VERSION}/lib -lmysqlclient"
+export MYSQLCLIENT_CFLAGS="-I${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_VERSION}/include/mysql"
 
