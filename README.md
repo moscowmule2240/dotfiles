@@ -37,6 +37,18 @@
 
 ## Windows
 
+### Local
+
+#### python
+
+    mklink %USERPROFILE%\pyproject.toml %USERPROFILE%\Workspace\dotfiles\files\pyproject.toml
+    mklink %USERPROFILE%\poetry.lock %USERPROFILE%\Workspace\dotfiles\files\poetry.lock
+    poetry install --no-root
+
+#### claude code
+
+    poetry run claude-monitor --timezone Asia/Tokyo
+
 ### WSL (Windows Subsystem for Linux)
 
 #### Install (PowerShell)
