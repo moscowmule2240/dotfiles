@@ -47,7 +47,7 @@
 
 #### claude code
 
-    poetry run claude-monitor --timezone Asia/Tokyo
+    poetry run claude-monitor --plan pro
 
 ### WSL (Windows Subsystem for Linux)
 
