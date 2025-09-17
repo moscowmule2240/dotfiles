@@ -13,7 +13,7 @@ done
 mkdir -p $HOME/.ssh/conf.d
 ln -s $PWD/files/ssh/conf.d/config $HOME/.ssh/conf.d/config
 
-# reload
+# zsh
 . $HOME/.zprofile
 
 # brew
@@ -21,7 +21,7 @@ cat ${PWD}/brew/default.txt | xargs -L 1 -P 1 brew reinstall
 
 # brew cask
 if [ "$(uname)" == 'Darwin' ]; then
-  cat ${PWD}/brew/cask.txt | xargs -L 1 -P 1 brew install --cask --force 
+  cat ${PWD}/brew/cask.txt | xargs -L 1 -P 1 brew install --cask --force
 fi
 
 # appstore
