@@ -13,6 +13,7 @@ htop
 jq
 liquidprompt
 mas
+mysql-client
 mysql-client@8.0
 pstree
 redis
