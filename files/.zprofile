@@ -3,11 +3,6 @@ if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
 fi
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
-fi
-
 # zsh
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
@@ -93,4 +88,9 @@ export PKG_CONFIG_PATH="$(brew --prefix ${BREW_FORMULAE_MYSQL})/lib/pkgconfig"
 MYSQL_VERSION=`ls -la $(brew --prefix ${BREW_FORMULAE_MYSQL}) | awk '{print $11}' | awk -F "/" '{print $4}'`
 export MYSQLCLIENT_LDFLAGS="-L${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_VERSION}/lib -lmysqlclient"
 export MYSQLCLIENT_CFLAGS="-I${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_VERSION}/include/mysql"
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
 
