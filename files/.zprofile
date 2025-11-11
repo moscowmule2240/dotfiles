@@ -52,6 +52,9 @@ setopt hist_verify
 setopt hist_reduce_blanks
 setopt hist_no_store
 
+# ssh
+export SSH_AUTH_SOCK="$HOME/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
+
 # asdf
 . $(brew --prefix asdf)/libexec/asdf.sh
 
