@@ -14,7 +14,7 @@ Host *
 
   SendEnv LANG LC_*
 
-  ControlPath /tmp/master-%r@%h:%p
+  ControlPath ~/.ssh/control-master:%r@%h:%p
   ControlMaster auto
   ControlPersist 1h
 
