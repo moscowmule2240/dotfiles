@@ -49,6 +49,13 @@
 
     poetry run claude-monitor --plan pro
 
+#### ssh
+
+    Services → OpenSSH Authentication Agent
+    set the Startup type setting to Disabled
+
+    Bitwarden Enable SSH agent
+
 ### WSL (Windows Subsystem for Linux)
 
 #### Install (PowerShell)
