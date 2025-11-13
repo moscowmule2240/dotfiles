@@ -32,7 +32,7 @@
 	format = ssh
 [gpg "ssh"]
 	defaultKeyCommand = ssh-add -La
-[includeIf "gitdir/i:C:/"]
+[includeIf "gitdir/i:[A-Z]:/"]
     path = ~/.gitconfig-windows
 [includeIf "gitdir/i:/Users/"]
     path = ~/.gitconfig-macos
