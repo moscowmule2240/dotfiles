@@ -41,9 +41,7 @@
 
 #### python
 
-    mklink %USERPROFILE%\pyproject.toml %USERPROFILE%\Workspace\dotfiles\files\pyproject.toml
-    mklink %USERPROFILE%\poetry.lock %USERPROFILE%\Workspace\dotfiles\files\poetry.lock
-    poetry install --no-root
+    choco isntall uv
 
 #### claude code
 
