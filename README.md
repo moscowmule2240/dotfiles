@@ -43,10 +43,6 @@
 
     choco isntall uv
 
-#### claude code
-
-    poetry run claude-monitor --plan pro
-
 #### ssh
 
     Services → OpenSSH Authentication Agent
