@@ -59,21 +59,16 @@
 
     mkdir "$env:USERPROFILE\.ssh\conf.d"
     New-Item -ItemType SymbolicLink -Value "$env:USERPROFILE\Workspace\dotfiles\files\ssh\conf.d\config" -Path "$env:USERPROFILE\.ssh\conf.d\config"
-    New-Item -ItemType SymbolicLink -Value "$env:USERPROFILE\Workspace\dotfiles\files\ssh\conf.d\config" -Path "$env:USERPROFILE\.ssh\conf.d\config"
-
-    $linesToRemove = @(
-        " ControlPath ~/.ssh/control-master"
-        " ControlMaster auto"
-        " ControlPersist 1h"
-    )
-    (Get-Content "$env:USERPROFILE\.ssh\config") | Where-Object { $_.Trim() -notin $linesToRemove.Trim() } | Set-Content "$env:USERPROFILE\.ssh\config"
-
 
     dotmine\README.md を実行
 
 #### Make Files
 
     Get-ChildItem "$env:USERPROFILE\.ssh\conf.d\*" | Get-Content | Set-Content "$env:USERPROFILE\.ssh\config"
+
+    $linesToRemovePatterns = "^ControlPath|^ControlMaster|^ControlPersist"
+    $lines = Get-Content "$env:USERPROFILE\.ssh\config" | Where-Object { $_.Trim() -notmatch $linesToRemovePatterns }
+    $lines | Set-Content "$env:USERPROFILE\.ssh\config"
 
 ### WSL (Windows Subsystem for Linux)
 
