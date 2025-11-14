@@ -50,25 +50,11 @@
 
     Bitwarden Enable SSH agent
 
-#### Symbolic link
+#### dotfiles
 
-    New-Item -ItemType SymbolicLink -Value "$env:USERPROFILE\Workspace\dotfiles\files\.gitconfig" -Path "$env:USERPROFILE\.gitconfig"
-    New-Item -ItemType SymbolicLink -Value "$env:USERPROFILE\Workspace\dotfiles\files\.gitconfig-macos" -Path "$env:USERPROFILE\.gitconfig-macos"
-    New-Item -ItemType SymbolicLink -Value "$env:USERPROFILE\Workspace\dotfiles\files\.gitconfig-windows" -Path "$env:USERPROFILE\.gitconfig-windows"
-    New-Item -ItemType SymbolicLink -Value "$env:USERPROFILE\Workspace\dotfiles\files\.gitignore_global" -Path "$env:USERPROFILE\.gitignore_global"
+##### Install
 
-    mkdir "$env:USERPROFILE\.ssh\conf.d"
-    New-Item -ItemType SymbolicLink -Value "$env:USERPROFILE\Workspace\dotfiles\files\ssh\conf.d\config" -Path "$env:USERPROFILE\.ssh\conf.d\config"
-
-    dotmine\README.md を実行
-
-#### Make Files
-
-    Get-ChildItem "$env:USERPROFILE\.ssh\conf.d\*" | Get-Content | Set-Content "$env:USERPROFILE\.ssh\config"
-
-    $linesToRemovePatterns = "^ControlPath|^ControlMaster|^ControlPersist"
-    $lines = Get-Content "$env:USERPROFILE\.ssh\config" | Where-Object { $_.Trim() -notmatch $linesToRemovePatterns }
-    $lines | Set-Content "$env:USERPROFILE\.ssh\config"
+    $ ./setup.ps1
 
 ### WSL (Windows Subsystem for Linux)
 
