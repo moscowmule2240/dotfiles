@@ -1,7 +1,3 @@
-[user]
-	name = moscowmule2240
-	email = moscowmule2240@users.noreply.github.com
-	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHZvvXThF+zQxwfw2dgB4TX7QDWRUTE+GQ4i/AvQ5kcq moscowmule2240@users.noreply.github.com
 [color]
 	ui = auto
 [core]
@@ -31,8 +27,10 @@
 [gpg]
 	format = ssh
 [gpg "ssh"]
-	defaultKeyCommand = ssh-add -La
+	defaultKeyCommand = ssh-add -L
 [includeIf "gitdir/i:[A-Z]:/"]
     path = ~/.gitconfig-windows
 [includeIf "gitdir/i:/Users/"]
     path = ~/.gitconfig-macos
+[include]
+    path = ~/.gitconfig-mine
