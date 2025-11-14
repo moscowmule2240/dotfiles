@@ -1,4 +1,5 @@
 [core]
     sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
+    autocrlf = true
 [gpg "ssh"]
     program = C:/Windows/System32/OpenSSH/ssh-keygen.exe
