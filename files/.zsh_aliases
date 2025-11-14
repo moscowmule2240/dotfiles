@@ -19,4 +19,7 @@ alias destory-docker-all='docker container rm `docker container ls -aq`; docker 
 alias mitmproxy-setting='sudo sysctl -w net.inet.ip.forwarding=1; sudo pfctl -f pf.conf; sudo pfctl -e'
 
 # mine
-. $HOME/Workspace/dotfiles/dotmine/files/.zsh_aliases
+DOTFILES_ROOT="$(cd "$(dirname "$(readlink -f "${(%):-%x}" 2>/dev/null || realpath "${(%):-%x}" 2>/dev/null || echo "${(%):-%x}")")/.." && pwd)"
+if [ -f "${DOTFILES_ROOT}/dotmine/files/.zsh_aliases" ]; then
+    . "${DOTFILES_ROOT}/dotmine/files/.zsh_aliases"
+fi
