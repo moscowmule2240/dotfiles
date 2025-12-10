@@ -25,3 +25,4 @@ zsh
 zsh-completions
 zsh-git-prompt
 ccusage
+fzf
