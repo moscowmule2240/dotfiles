@@ -76,11 +76,11 @@ export PATH="$(brew --prefix mysql-client)/bin:$PATH"
 # elixir
 export MANPATH=$(brew --prefix erlang)/lib/erlang/man:$MANPATH
 
-# mono
-export MONO_GAC_PREFIX=$(brew --prefix)
-
 # docker
 export COMPOSE_HTTP_TIMEOUT=300
+
+# dotnet
+export PATH="$(brew --prefix dotnet)/bin:$PATH"
 
 # python install
 BREW_FORMULAE_MYSQL="mysql-client@8.0"
