@@ -27,3 +27,4 @@ zsh-git-prompt
 ccusage
 fzf
 dotnet
+bun
