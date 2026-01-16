@@ -35,3 +35,19 @@ brew cleanup -s
 
 # dotmine
 bash dotmine/setup.sh
+
+# asdf
+. $(brew --prefix asdf)/libexec/asdf.sh
+
+install_asdf_plugin() {
+  local plugin=$1
+  asdf plugin add $plugin
+  asdf plugin update $plugin
+  asdf install $plugin latest
+  asdf set --home $plugin latest
+}
+
+install_asdf_plugin direnv
+install_asdf_plugin uv
+install_asdf_plugin bun
+install_asdf_plugin nodejs
