@@ -52,3 +52,6 @@ Get-ChildItem "$env:USERPROFILE\.ssh\conf.d\*" | Get-Content | Set-Content "$env
 $linesToRemovePatterns = "^ControlPath|^ControlMaster|^ControlPersist"
 $lines = Get-Content "$env:USERPROFILE\.ssh\config" | Where-Object { $_.Trim() -notmatch $linesToRemovePatterns }
 $lines | Set-Content "$env:USERPROFILE\.ssh\config"
+
+# claude-code
+irm https://claude.ai/install.ps1 | iex
