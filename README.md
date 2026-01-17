@@ -61,3 +61,4 @@
 
     volta install node@latest
     volta install bun@latest
+    volta install @anthropic-ai/claude-code@latest
