@@ -2,6 +2,7 @@ appcleaner
 bitwarden
 charles
 claude-code
+comet
 cyberduck
 docker-desktop
 google-chrome
