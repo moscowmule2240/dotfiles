@@ -48,7 +48,46 @@ New-Item -ItemType SymbolicLink -Path $sshConfigTarget -Target $sshConfigSource 
 & "$PSScriptRoot\dotmine\setup.ps1"
 
 # ssh config
-Get-ChildItem "$env:USERPROFILE\.ssh\conf.d\*" | Get-Content | Set-Content "$env:USERPROFILE\.ssh\config"
-$linesToRemovePatterns = "^ControlPath|^ControlMaster|^ControlPersist"
-$lines = Get-Content "$env:USERPROFILE\.ssh\config" | Where-Object { $_.Trim() -notmatch $linesToRemovePatterns }
-$lines | Set-Content "$env:USERPROFILE\.ssh\config"
+# Inject SSH config auto-generation into PowerShell profile
+$profilePath = $PROFILE
+if (-not (Test-Path $profilePath)) {
+    if (-not (Test-Path (Split-Path $profilePath))) {
+        New-Item -ItemType Directory -Path (Split-Path $profilePath) -Force | Out-Null
+    }
+    New-Item -ItemType File -Path $profilePath -Force | Out-Null
+}
+
+$sshConfigFunctions = @'
+
+# SSH Config Auto-generation
+function Update-SshConfig {
+    $sshHome = "$env:USERPROFILE\.ssh"
+    $confDir = Join-Path $sshHome "conf.d"
+    $targetConfig = Join-Path $sshHome "config"
+    
+    if (Test-Path $confDir) {
+        # Get content from files only
+        $content = Get-ChildItem (Join-Path $confDir "*") -File | Get-Content
+        $filtered = $content | Where-Object { $_ -notmatch "^\s*(ControlPath|ControlMaster|ControlPersist)" }
+        $filtered | Set-Content $targetConfig
+    }
+}
+
+function ssh {
+    Update-SshConfig
+    ssh.exe @args
+}
+
+function scp {
+    Update-SshConfig
+    scp.exe @args
+}
+'@
+
+$currentProfileContent = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
+if ($null -eq $currentProfileContent -or $currentProfileContent -notmatch "function Update-SshConfig") {
+    Add-Content -Path $profilePath -Value $sshConfigFunctions
+    Write-Host "Added SSH config automation to $profilePath"
+} else {
+    Write-Host "SSH config automation already exists in $profilePath"
+}
