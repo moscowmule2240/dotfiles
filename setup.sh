@@ -22,7 +22,7 @@ cat ${PWD}/brew/default.txt | xargs -L 1 -P 1 brew reinstall
 # brew cask
 brew tap oven-sh/bun
 if [ "$(uname)" == 'Darwin' ]; then
-  cat ${PWD}/brew/cask.txt | xargs -L 1 -P 1 brew install --cask --force
+  cat ${PWD}/brew/cask.txt | xargs -L 1 -P 1 brew install cask --force
 fi
 
 # appstore
