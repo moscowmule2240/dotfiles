@@ -104,7 +104,6 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
 fpath+=~/.zfunc
-autoload -Uz compinit && compinit
 
 if [ -f ~/.zsh_aliases ]; then
     . ~/.zsh_aliases
@@ -140,3 +139,5 @@ fi
 HISTSIZE=102400
 HISTTIMEFORMAT='%Y/%m/%d %H:%M:%S '
 
+# Initialize zsh completion system
+autoload -Uz compinit && compinit

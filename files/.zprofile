@@ -7,8 +7,6 @@ fi
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
 # ls
-autoload -U compinit
-compinit
 export LSCOLORS=exfxcxdxbxegedabagacad
 export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=46;34:cd=43;34:su=41;30:sg=46;30:tw=42;30:ow=43;30'
 zstyle ':completion:*' list-colors 'di=34' 'ln=35' 'so=32' 'ex=31' 'bd=46;34' 'cd=43;34'
@@ -33,9 +31,6 @@ fi
 # zsh-completions
 if type brew &>/dev/null; then
   FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
-
-  autoload -Uz compinit
-  compinit
 fi
 
 # zsh-git-prompt
@@ -63,6 +58,9 @@ export DIRENV_WARN_TIMEOUT=100s
 export EDITOR=vim
 eval "$(asdf exec direnv hook zsh)"
 
+# claude ai
+export CLAUDE_CODE_EFFORT_LEVEL=max
+
 # android
 export ANDROID_SDK_ROOT=$(brew --prefix)/share/android-sdk
 export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
@@ -78,6 +76,7 @@ export MANPATH=$(brew --prefix erlang)/lib/erlang/man:$MANPATH
 
 # docker
 export COMPOSE_HTTP_TIMEOUT=300
+fpath=($HOME/.docker/completions $fpath)
 
 # dotnet
 export PATH="$(brew --prefix dotnet)/bin:$PATH"
@@ -96,4 +95,3 @@ export MYSQLCLIENT_CFLAGS="-I${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_V
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
-
