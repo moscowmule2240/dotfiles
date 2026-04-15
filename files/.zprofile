@@ -50,6 +50,9 @@ setopt hist_no_store
 # ssh
 export SSH_AUTH_SOCK="${HOME}/.bitwarden-ssh-agent.sock"
 
+# mise
+eval "$(mise activate zsh)"
+
 # asdf
 . $(brew --prefix asdf)/libexec/asdf.sh
 
