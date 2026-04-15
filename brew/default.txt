@@ -9,6 +9,7 @@ asdf
 awscli
 git
 git-lfs
+gh
 htop
 jq
 liquidprompt
