@@ -1,4 +1,5 @@
 bzip2
+bitwarden-cli
 libffi
 openssl
 sqlite

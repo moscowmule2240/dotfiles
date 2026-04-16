@@ -94,6 +94,9 @@ MYSQL_VERSION=`ls -la $(brew --prefix ${BREW_FORMULAE_MYSQL}) | awk '{print $11}
 export MYSQLCLIENT_LDFLAGS="-L${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_VERSION}/lib -lmysqlclient"
 export MYSQLCLIENT_CFLAGS="-I${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_VERSION}/include/mysql"
 
+# chisiki
+[[ -r ~/.zfunc/chisiki.zsh ]] && source ~/.zfunc/chisiki.zsh
+
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
