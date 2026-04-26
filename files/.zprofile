@@ -41,6 +41,9 @@ export LESS=' -X -R -F '
 export LESSOPEN='| $(brew --prefix)/bin/src-hilite-lesspipe.sh %s'
 
 # history
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=102400
+SAVEHIST=102400
 setopt share_history
 setopt hist_ignore_all_dups
 setopt hist_verify
