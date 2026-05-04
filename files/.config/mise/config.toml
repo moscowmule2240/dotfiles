@@ -1,0 +1,7 @@
+[tools]
+bun = "latest"
+node = "latest"
+uv = "latest"
+
+[settings]
+python.github_attestations = false
