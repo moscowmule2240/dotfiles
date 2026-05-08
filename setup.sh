@@ -3,7 +3,7 @@
 # .file
 for file in ${PWD}/files/.*; do
   file_name=${file##*/}
-  if [ ${file_name} != "." ] && [ ${file_name} != ".." ] && [ ${file_name} != ".config" ]; then
+  if [ ${file_name} != "." ] && [ ${file_name} != ".." ] && [ ${file_name} != ".config" ] && [ ${file_name} != ".zfunc" ]; then
     echo "execute ln -s ${file} $HOME/${file_name}"
     ln -s ${file} $HOME/${file_name}
   fi
@@ -16,6 +16,13 @@ ln -s $PWD/files/ssh/conf.d/config $HOME/.ssh/conf.d/config
 # mise
 mkdir -p $HOME/.config/mise
 ln -s $PWD/files/.config/mise/config.toml $HOME/.config/mise/config.toml
+
+# zfunc
+mkdir -p $HOME/.zfunc
+for f in ${PWD}/files/.zfunc/*; do
+  echo "execute ln -s ${f} $HOME/.zfunc/${f##*/}"
+  ln -s "${f}" "$HOME/.zfunc/${f##*/}"
+done
 
 # zsh
 . $HOME/.zprofile
