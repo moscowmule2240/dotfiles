@@ -1,6 +1,7 @@
 appcleaner
 bitwarden
 charles
+claude
 claude-code@latest
 comet
 cyberduck
