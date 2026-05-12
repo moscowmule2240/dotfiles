@@ -47,6 +47,14 @@ brew cleanup -s
 # dotmine
 bash dotmine/setup.sh
 
+# pmset (macOS)
+if [ "$(uname)" == 'Darwin' ]; then
+  # 蓋を閉じてもスリープに入らない
+  sudo pmset -a disablesleep 1
+  # 1時間 (60分) 操作がなければスリープ
+  sudo pmset -a sleep 60
+fi
+
 # asdf
 . $(brew --prefix asdf)/libexec/asdf.sh
 
