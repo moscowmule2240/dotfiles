@@ -55,6 +55,20 @@ if [ "$(uname)" == 'Darwin' ]; then
   sudo pmset -a sleep 60
 fi
 
+# LaunchAgents (macOS)
+# Bitwarden SSH agent socket を launchd 環境変数として設定し、
+# Claude Desktop など GUI から起動するアプリでも SSH 署名が通るようにする。
+if [ "$(uname)" == 'Darwin' ]; then
+  mkdir -p $HOME/Library/LaunchAgents
+  for f in ${PWD}/files/Library/LaunchAgents/*.plist; do
+    target="$HOME/Library/LaunchAgents/${f##*/}"
+    echo "execute ln -s ${f} ${target}"
+    ln -s "${f}" "${target}"
+    launchctl bootstrap "gui/$(id -u)" "${target}" 2>/dev/null \
+      || launchctl load "${target}"
+  done
+fi
+
 # asdf
 . $(brew --prefix asdf)/libexec/asdf.sh
 
