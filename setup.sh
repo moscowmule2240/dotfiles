@@ -52,8 +52,10 @@ bash dotmine/setup.sh
 if [ "$(uname)" == 'Darwin' ]; then
   # 蓋を閉じてもスリープに入らない
   sudo pmset -a disablesleep 1
-  # 1時間 (60分) 操作がなければスリープ
-  sudo pmset -a sleep 60
+  # バッテリ駆動時は 60分 アイドルでスリープ
+  sudo pmset -b sleep 60
+  # 電源接続時はスリープしない
+  sudo pmset -c sleep 0
 fi
 
 # git ssh signing (macOS)
