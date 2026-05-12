@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # .file
+# .gitconfig-macos は setup.sh で実体ファイルとして生成するので除外する
 for file in ${PWD}/files/.*; do
   file_name=${file##*/}
-  if [ ${file_name} != "." ] && [ ${file_name} != ".." ] && [ ${file_name} != ".config" ] && [ ${file_name} != ".zfunc" ]; then
+  if [ ${file_name} != "." ] && [ ${file_name} != ".." ] && [ ${file_name} != ".config" ] && [ ${file_name} != ".zfunc" ] && [ ${file_name} != ".gitconfig-macos" ]; then
     echo "execute ln -s ${file} $HOME/${file_name}"
     ln -s ${file} $HOME/${file_name}
   fi
@@ -55,18 +56,17 @@ if [ "$(uname)" == 'Darwin' ]; then
   sudo pmset -a sleep 60
 fi
 
-# LaunchAgents (macOS)
-# Bitwarden SSH agent socket を launchd 環境変数として設定し、
-# Claude Desktop など GUI から起動するアプリでも SSH 署名が通るようにする。
+# git ssh signing (macOS)
+# Claude Desktop など SSH_AUTH_SOCK が macOS 標準 ssh-agent socket に固定される
+# 環境でも git 署名が通るよう、Bitwarden socket を強制する wrapper を指定する。
+# gpg.ssh.{program,defaultKeyCommand} は ~ を展開しないため絶対パスで書き込む。
+# 共通の macOS 用 git 設定 (将来用) は dotfiles の files/.gitconfig-macos を
+# [include] で取り込む形で繋ぐ。
 if [ "$(uname)" == 'Darwin' ]; then
-  mkdir -p $HOME/Library/LaunchAgents
-  for f in ${PWD}/files/Library/LaunchAgents/*.plist; do
-    target="$HOME/Library/LaunchAgents/${f##*/}"
-    echo "execute ln -s ${f} ${target}"
-    ln -s "${f}" "${target}"
-    launchctl bootstrap "gui/$(id -u)" "${target}" 2>/dev/null \
-      || launchctl load "${target}"
-  done
+  : > "$HOME/.gitconfig-macos"
+  git config --file "$HOME/.gitconfig-macos" gpg.ssh.program "${PWD}/files/bin/ssh-keygen-bitwarden.sh"
+  git config --file "$HOME/.gitconfig-macos" gpg.ssh.defaultKeyCommand "${PWD}/files/bin/ssh-add-bitwarden.sh -L"
+  git config --file "$HOME/.gitconfig-macos" include.path "${PWD}/files/.gitconfig-macos"
 fi
 
 # asdf
