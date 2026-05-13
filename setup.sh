@@ -49,9 +49,9 @@ brew cleanup -s
 bash dotmine/setup.sh
 
 # pmset (macOS)
+# 「蓋閉じでスリープしない」は disablesleep だと手動スリープも止まるので Amphetamine
+# (mas で導入) に任せる。pmset は idle sleep のスケジュールだけ管理する。
 if [ "$(uname)" == 'Darwin' ]; then
-  # 蓋を閉じてもスリープに入らない
-  sudo pmset -a disablesleep 1
   # バッテリ駆動時は 60分 アイドルでスリープ
   sudo pmset -b sleep 60
   # 電源接続時はスリープしない
