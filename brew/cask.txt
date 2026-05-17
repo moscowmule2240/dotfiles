@@ -17,5 +17,6 @@ pycharm
 session-manager-plugin
 unity-hub
 visual-studio-code
+wireshark
 zoom
 
