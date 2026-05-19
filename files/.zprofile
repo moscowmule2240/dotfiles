@@ -100,8 +100,8 @@ export MYSQLCLIENT_CFLAGS="-I${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_V
 # chisiki
 [[ -r ~/.zfunc/chisiki.zsh ]] && source ~/.zfunc/chisiki.zsh
 
-# update-claude
-[[ -r ~/.zfunc/update-claude.zsh ]] && source ~/.zfunc/update-claude.zsh
+# update-tools
+[[ -r ~/.zfunc/update-tools.zsh ]] && source ~/.zfunc/update-tools.zsh
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.local/bin" ] ; then
