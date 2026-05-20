@@ -1,7 +1,20 @@
 [tools]
+awscli = { version = "latest", symlink_bins = "true" }
 bun = "latest"
+direnv = "latest"
+duckdb = "latest"
+ecspresso = "latest"
+gh = "latest"
+jq = "latest"
 node = "latest"
+python = "latest"
 uv = "latest"
+fzf = "latest"
+git-lfs = "latest"
+redis = "latest"
+"aqua:mas-cli/mas" = "latest"
+ripgrep = "latest"
+bitwarden = "latest"
 
 [settings]
 python.github_attestations = false

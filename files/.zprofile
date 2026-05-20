@@ -56,13 +56,10 @@ export SSH_AUTH_SOCK="${HOME}/.bitwarden-ssh-agent.sock"
 # mise
 eval "$(mise activate zsh)"
 
-# asdf
-. $(brew --prefix asdf)/libexec/asdf.sh
-
-# direnv
+# direnv (mise 管理の direnv を使う)
 export DIRENV_WARN_TIMEOUT=100s
 export EDITOR=vim
-eval "$(asdf exec direnv hook zsh)"
+eval "$(direnv hook zsh)"
 
 # claude ai
 export CLAUDE_CODE_EFFORT_LEVEL=max
