@@ -19,12 +19,12 @@ update-tools() {
     pycharm \
     visual-studio-code
   brew upgrade --formula \
-    bitwarden-cli \
-    gh \
     htop \
     mise \
     zsh \
     zsh-completions \
     zsh-git-prompt
+  # mise 管理に移したもの (旧 brew formula 相当)
+  mise upgrade bitwarden gh
   brew cleanup -s
 }
