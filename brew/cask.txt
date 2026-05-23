@@ -6,17 +6,18 @@ claude-code@latest
 comet
 cyberduck
 docker-desktop
+dotnet-sdk
+gcloud-cli
 google-chrome
 google-japanese-ime
 iterm2
 mysqlworkbench
 onedrive
-poppler
 postman
 pycharm
 session-manager-plugin
 unity-hub
 visual-studio-code
-wireshark
+wireshark-app
 zoom
 

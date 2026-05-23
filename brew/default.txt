@@ -11,6 +11,7 @@ liquidprompt
 mise
 mysql-client
 mysql-client@8.0
+poppler
 pstree
 source-highlight
 tree
@@ -18,5 +19,3 @@ watch
 zsh
 zsh-completions
 zsh-git-prompt
-ccusage
-dotnet
