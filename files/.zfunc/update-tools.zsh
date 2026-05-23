@@ -6,6 +6,7 @@
 update-tools() {
   brew update
   brew upgrade --cask \
+    antigravity-ide \
     bitwarden \
     claude \
     claude-code@latest \
