@@ -1,7 +1,8 @@
 [tools]
 awscli = { version = "latest", symlink_bins = "true" }
 bun = "latest"
-direnv = "latest"
+# direnv / redis / mas は Windows で動かないため os で限定 (mac/linux のみ)
+direnv = { version = "latest", os = ["linux", "macos"] }
 duckdb = "latest"
 ecspresso = "latest"
 gh = "latest"
@@ -11,8 +12,8 @@ python = "latest"
 uv = "latest"
 fzf = "latest"
 git-lfs = "latest"
-redis = "latest"
-"aqua:mas-cli/mas" = "latest"
+redis = { version = "latest", os = ["linux", "macos"] }
+"aqua:mas-cli/mas" = { version = "latest", os = ["macos"] }
 ripgrep = "latest"
 bitwarden = "latest"
 

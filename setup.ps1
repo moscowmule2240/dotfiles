@@ -91,3 +91,29 @@ if ($null -eq $currentProfileContent -or $currentProfileContent -notmatch "funct
 } else {
     Write-Host "SSH config automation already exists in $profilePath"
 }
+
+# mise config (symlink ~/.config/mise/config.toml -> dotfiles)
+$miseConfigDir = "$HOME\.config\mise"
+if (-not (Test-Path $miseConfigDir)) {
+    New-Item -ItemType Directory -Path $miseConfigDir -Force | Out-Null
+}
+$miseConfigSource = "$PSScriptRoot\files\.config\mise\config.toml"
+$miseConfigTarget = "$miseConfigDir\config.toml"
+if (Test-Path $miseConfigTarget) {
+    Remove-Item $miseConfigTarget -Force
+}
+New-Item -ItemType SymbolicLink -Path $miseConfigTarget -Target $miseConfigSource -Force | Out-Null
+
+# mise install (config.toml の tool を一括導入。mas/redis/direnv は os 指定で Windows ではスキップ)
+choco install mise -y
+mise install
+
+# mise activation in PowerShell profile
+$miseActivate = '(&mise activate pwsh) | Out-String | Invoke-Expression'
+$currentProfileContent = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
+if ($null -eq $currentProfileContent -or $currentProfileContent -notmatch "mise activate pwsh") {
+    Add-Content -Path $profilePath -Value "`n$miseActivate"
+    Write-Host "Added mise activation to $profilePath"
+} else {
+    Write-Host "mise activation already exists in $profilePath"
+}

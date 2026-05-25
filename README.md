@@ -82,16 +82,18 @@
 
     Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-### tools
+### tools (mise)
 
-#### Install
+`setup.ps1` が `choco install mise` で mise を導入し、`~/.config/mise/config.toml`
+(macOS と共通) の tool を `mise install` で一括インストールします。
+mas / redis / direnv は config.toml の `os` 指定で Windows ではスキップされます。
 
-##### 管理者権限あり PowerShell
+#### 個別に追加する場合
 
-    choco install volta
+    mise use -g node@latest
+    mise use -g bun@latest
+    mise use -g claude-code@latest
 
-##### 管理者権限なし PowerShell
+#### 旧 volta からの移行
 
-    volta install node@latest
-    volta install bun@latest
-    volta install @anthropic-ai/claude-code@latest
+    choco uninstall volta
