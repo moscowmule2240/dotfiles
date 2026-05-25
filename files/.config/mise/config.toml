@@ -1,6 +1,5 @@
 [tools]
 # Windows でも使うもの
-awscli = { version = "latest", symlink_bins = "true" }
 bun = "latest"
 gh = "latest"
 jq = "latest"
@@ -9,7 +8,8 @@ uv = "latest"
 git-lfs = "latest"
 bitwarden = "latest"
 
-# Windows では不要 / 非対応 (mac/linux のみ)
+# Windows では不要 / 非対応 (mac/linux のみ。Windows は choco の awscli を使う)
+awscli = { version = "latest", symlink_bins = "true", os = ["linux", "macos"] }
 direnv = { version = "latest", os = ["linux", "macos"] }
 duckdb = { version = "latest", os = ["linux", "macos"] }
 ecspresso = { version = "latest", os = ["linux", "macos"] }
