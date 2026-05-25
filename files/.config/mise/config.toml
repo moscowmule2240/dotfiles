@@ -21,5 +21,9 @@ ripgrep = { version = "latest", os = ["linux", "macos"] }
 # macOS 専用
 "aqua:mas-cli/mas" = { version = "latest", os = ["macos"] }
 
+# Windows 専用 (choco から移行)
+protoc = { version = "latest", os = ["windows"] }
+java = { version = "temurin-21", os = ["windows"] }
+
 [settings]
 python.github_attestations = false
