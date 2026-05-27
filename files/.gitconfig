@@ -23,7 +23,7 @@
 [commit]
 	gpgsign = true
 [tag]
-	gpgSign = true
+	gpgsign = false
 [gpg]
 	format = ssh
 [gpg "ssh"]
