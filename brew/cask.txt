@@ -12,6 +12,7 @@ gcloud-cli
 google-chrome
 google-japanese-ime
 iterm2
+jordanbaird-ice
 mysqlworkbench
 onedrive
 postman
