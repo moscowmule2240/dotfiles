@@ -61,9 +61,6 @@ export DIRENV_WARN_TIMEOUT=100s
 export EDITOR=vim
 eval "$(direnv hook zsh)"
 
-# claude ai
-export CLAUDE_CODE_EFFORT_LEVEL=max
-
 # android
 export ANDROID_SDK_ROOT=$(brew --prefix)/share/android-sdk
 export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
