@@ -81,9 +81,6 @@ fpath=($HOME/.docker/completions $fpath)
 # dotnet
 export PATH="$(brew --prefix dotnet)/bin:$PATH"
 
-# antigravity ide
-export PATH="$HOME/.antigravity-ide/antigravity-ide/bin:$PATH"
-
 # python install
 BREW_FORMULAE_MYSQL="mysql-client@8.0"
 export LDFLAGS="-L$(brew --prefix libffi)/lib -L$(brew --prefix zlib)/lib -L$(brew --prefix bzip2)/lib -L$(brew --prefix sqlite)/lib -L$(brew --prefix zstd)/lib -L$(brew --prefix openssl)/lib -L$(brew --prefix ${BREW_FORMULAE_MYSQL})/lib"
