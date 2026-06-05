@@ -56,10 +56,8 @@ export SSH_AUTH_SOCK="${HOME}/.bitwarden-ssh-agent.sock"
 # mise
 eval "$(mise activate zsh)"
 
-# direnv (mise 管理の direnv を使う)
-export DIRENV_WARN_TIMEOUT=100s
+# editor
 export EDITOR=vim
-eval "$(direnv hook zsh)"
 
 # android
 export ANDROID_SDK_ROOT=$(brew --prefix)/share/android-sdk

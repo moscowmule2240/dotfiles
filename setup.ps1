@@ -104,7 +104,7 @@ if (Test-Path $miseConfigTarget) {
 }
 New-Item -ItemType SymbolicLink -Path $miseConfigTarget -Target $miseConfigSource -Force | Out-Null
 
-# mise install (config.toml の tool を一括導入。mas/redis/direnv は os 指定で Windows ではスキップ)
+# mise install (config.toml の tool を一括導入。mas/redis は os 指定で Windows ではスキップ)
 choco install mise -y
 mise install
 
