@@ -1,0 +1,3 @@
+# uv ユーザー全体設定
+# Python は uv 管理のものだけを使う (システム/Homebrew/mise の Python を使わない)
+python-preference = "only-managed"

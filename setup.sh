@@ -18,6 +18,10 @@ ln -s $PWD/files/ssh/conf.d/config $HOME/.ssh/conf.d/config
 mkdir -p $HOME/.config/mise
 ln -s $PWD/files/.config/mise/config.toml $HOME/.config/mise/config.toml
 
+# uv config (Python は uv 管理のみ: python-preference = only-managed)
+mkdir -p $HOME/.config/uv
+ln -s $PWD/files/.config/uv/uv.toml $HOME/.config/uv/uv.toml
+
 # zfunc
 mkdir -p $HOME/.zfunc
 for f in ${PWD}/files/.zfunc/*; do
