@@ -104,6 +104,18 @@ if (Test-Path $miseConfigTarget) {
 }
 New-Item -ItemType SymbolicLink -Path $miseConfigTarget -Target $miseConfigSource -Force | Out-Null
 
+# uv config (Windows は %APPDATA%\uv\uv.toml。python-preference = only-managed)
+$uvConfigDir = Join-Path $env:APPDATA "uv"
+if (-not (Test-Path $uvConfigDir)) {
+    New-Item -ItemType Directory -Path $uvConfigDir -Force | Out-Null
+}
+$uvConfigSource = "$PSScriptRoot\files\.config\uv\uv.toml"
+$uvConfigTarget = Join-Path $uvConfigDir "uv.toml"
+if (Test-Path $uvConfigTarget) {
+    Remove-Item $uvConfigTarget -Force
+}
+New-Item -ItemType SymbolicLink -Path $uvConfigTarget -Target $uvConfigSource -Force | Out-Null
+
 # mise install (config.toml の tool を一括導入。mas/redis は os 指定で Windows ではスキップ)
 choco install mise -y
 mise install
