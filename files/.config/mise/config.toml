@@ -23,6 +23,7 @@ ripgrep = { version = "latest", os = ["linux", "macos"] }
 # Windows 専用 (choco から移行)
 protoc = { version = "latest", os = ["windows"] }
 java = { version = "temurin-21", os = ["windows"] }
+bitwarden-secrets-manager = "latest"
 
 [settings]
 python.github_attestations = false
