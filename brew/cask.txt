@@ -11,6 +11,7 @@ dotnet-sdk
 gcloud-cli
 google-chrome
 google-japanese-ime
+inkscape
 iterm2
 jordanbaird-ice
 mysqlworkbench
