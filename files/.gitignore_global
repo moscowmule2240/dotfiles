@@ -34,3 +34,5 @@ nosetests.xml
 .pydevproject
 .idea
 .serena
+
+**/.claude/settings.local.json
