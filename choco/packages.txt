@@ -1,0 +1,26 @@
+# Windows GUI / アプリのインストールリスト (setup.ps1 が choco install -y で一括導入)
+# CLI・ランタイムは mise (files/.config/mise/config.toml) で管理。ここは GUI 中心。
+# '#' 始まりの行と空行は setup.ps1 側で無視される。
+
+# --- ブラウザ ---
+googlechrome
+comet
+
+# --- 開発ツール ---
+vscode
+pycharm
+docker-desktop
+dotnet-sdk
+mysql.workbench
+gcloudsdk
+
+# --- AI / エディタ ---
+claude
+# antigravity-ide   # 自作 choco パッケージを公開後に有効化
+# antigravity-cli   # 自作 choco パッケージを公開後に有効化
+# claude-code は Windows では mise 管理 (config.toml) のためここには入れない
+
+# --- ユーティリティ ---
+bitwarden
+GoogleJapaneseInput
+googledrive

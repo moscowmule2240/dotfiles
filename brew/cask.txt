@@ -10,6 +10,7 @@ docker-desktop
 dotnet-sdk
 gcloud-cli
 google-chrome
+google-drive
 google-japanese-ime
 inkscape
 iterm2

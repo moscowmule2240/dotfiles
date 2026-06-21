@@ -120,6 +120,19 @@ New-Item -ItemType SymbolicLink -Path $uvConfigTarget -Target $uvConfigSource -F
 choco install mise -y
 mise install
 
+# choco packages (GUI アプリ等。mise で扱えない Windows ソフトを choco で管理)
+# '#' 始まりの行と空行はスキップする。
+$chocoPackagesFile = "$PSScriptRoot\choco\packages.txt"
+if (Test-Path $chocoPackagesFile) {
+    Get-Content $chocoPackagesFile |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { $_ -and -not $_.StartsWith('#') } |
+        ForEach-Object {
+            Write-Host "choco install $_ -y"
+            choco install $_ -y
+        }
+}
+
 # mise activation in PowerShell profile
 $miseActivate = '(&mise activate pwsh) | Out-String | Invoke-Expression'
 $currentProfileContent = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
