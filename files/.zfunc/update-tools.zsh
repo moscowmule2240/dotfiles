@@ -6,6 +6,7 @@
 update-tools() {
   brew update
   brew upgrade --cask \
+    antigravity-cli \
     antigravity-ide \
     bitwarden \
     claude \
@@ -25,6 +26,7 @@ update-tools() {
     zsh-completions \
     zsh-git-prompt
   # mise 管理に移したもの (旧 brew formula 相当)
-  mise upgrade bitwarden gh
+  # --yes: 確認プロンプトを自動承諾して対話なしで進める
+  mise upgrade --yes bitwarden gh
   brew cleanup -s
 }
