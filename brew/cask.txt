@@ -20,6 +20,7 @@ onedrive
 postman
 pycharm
 session-manager-plugin
+typeless
 unity-hub
 visual-studio-code
 wireshark-app
