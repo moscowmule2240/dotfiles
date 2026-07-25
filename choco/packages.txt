@@ -24,4 +24,4 @@ claude
 bitwarden
 GoogleJapaneseInput
 googledrive
-# typeless   # AI 音声入力。chocolatey へパッケージ追加を依頼中。公開後に有効化
+typeless
