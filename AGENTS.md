@@ -71,6 +71,14 @@ Claude Desktop 等 `SSH_AUTH_SOCK` が macOS 標準 agent に固定される環�
 `files/bin/ssh-{keygen,add}-bitwarden.sh` wrapper で Bitwarden の socket を強制している。
 `gpg.ssh.*` は `~` を展開しないため設定は絶対パスで書く (setup.sh が生成)。
 
+### GUI アプリの PATH (macOS)
+
+Dock 起動のアプリは launchd 既定 PATH (`/usr/local/bin` を含まない) を継承するため、
+`sudo launchctl config user path …` で `/usr/local/bin` を足す運用。
+これは `$HOME` 外のシステム領域 (`/private/var/db/com.apple.xpc.launchd/`) を書き換え、
+sudo と再起動を要するので **setup.sh では自動化せず手動手順として扱う**
+(この方針を変えて setup.sh に取り込まないこと)。手順と却下した代替案は [README.md](README.md) を参照。
+
 ### スリープ管理 (macOS)
 
 蓋閉じ抑止は `pmset disablesleep` ではなく Amphetamine (mas 導入) に委譲する方針。

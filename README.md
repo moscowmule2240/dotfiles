@@ -28,6 +28,38 @@
 ### login shell
 「設定」->「ユーザとグループ」->「ユーザ名」右クリック->「詳細オプション」->「ログインシェル」変更 `/opt/homebrew/bin/zsh`
 
+### GUI アプリの PATH (launchd)
+
+Dock / Spotlight / Launchpad から起動したアプリは zsh を経由しないため、PATH は zsh の設定ではなく
+launchd の user domain の既定値 (`/usr/bin:/bin:/usr/sbin:/sbin`) になり `/usr/local/bin` を含まない。
+
+これが実際に問題になる例が PyCharm の Docker 連携。`~/.docker/config.json` の
+`"credsStore": "desktop"` によって docker CLI は `docker-credential-desktop` を PATH から探すが、
+その実体は `/usr/local/bin/docker-credential-desktop` (Docker.app 内への symlink) にしかないため、
+Dock から起動した PyCharm では解決できず認証エラーになる。ターミナルから起動した場合は
+zsh の PATH を継承するので再現しない。
+
+launchd の user domain の既定 PATH に `/usr/local/bin` を足して解決する。
+
+    sudo launchctl config user path /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+- **再起動が必要。** このコマンドは `/private/var/db/com.apple.xpc.launchd/config/user.plist` を
+  書くだけで、読まれるのは次回 boot 時
+- 設定内容の確認: `sudo plutil -p /private/var/db/com.apple.xpc.launchd/config/user.plist`
+  (`launchctl config` に現在値を表示するサブコマンドは無い)
+- 再起動後の実効値の確認: `launchctl getenv PATH`
+- 解除: 上記 plist を削除して再起動
+
+Homebrew (`/opt/homebrew/bin`) と mise の shims は意図的に含めていない。GUI アプリに渡すのは
+Apple 標準 + Docker Desktop の CLI までに絞り、GUI から起動したアプリが mise/brew 管理下の
+バージョンを暗黙に拾わないようにする (シェル側は zsh の設定で解決済み)。
+
+却下した代替案:
+
+- `credsStore` を外す → 資格情報が `~/.docker/config.json` に平文で載るため却下
+- PyCharm をターミナルから起動する → Dock から起動するという前提を崩すため却下
+- credential helper を `/usr/bin` に置く → SIP 保護下で書き込めない
+
 ### Amphetamine
 
 `pmset disablesleep` だと「蓋閉じ防止」と「手動スリープ」を両立できないため、蓋閉じ抑止は Amphetamine (mas でインストール) に委譲する。
