@@ -40,12 +40,23 @@ Dock から起動した PyCharm では解決できず認証エラーになる。
 zsh の PATH を継承するので再現しない。
 
 launchd の user domain の既定 PATH に `/usr/local/bin` を足して解決する。
+**`setup.sh` が実行するので通常は手作業不要** (macOS のみ)。setup.sh の挙動は次の 3 通り。
+
+| 現在の登録値 | 動作 |
+|---|---|
+| 未登録 | launchd の既定 PATH (`getconf PATH`) を取得し、その先頭に `/usr/local/bin:` を足して登録 |
+| 登録済みで `/usr/local/bin` を含まない | **その値を保ったまま**先頭に `/usr/local/bin:` を足して再登録 |
+| 登録済みで `/usr/local/bin` を含む | 何もしない (sudo プロンプトも出ない) |
+
+値を固定文字列で上書きせず既存値の先頭に足すのは、他の目的で登録したパスを消さないため。
+単体で適用する場合は以下 (未登録の Mac ならこれと同じ結果になる)。
 
     sudo launchctl config user path /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 - **再起動が必要。** このコマンドは `/private/var/db/com.apple.xpc.launchd/config/user.plist` を
-  書くだけで、読まれるのは次回 boot 時
-- 設定内容の確認: `sudo plutil -p /private/var/db/com.apple.xpc.launchd/config/user.plist`
+  書くだけで、読まれるのは次回 boot 時。`setup.sh` 経由でも同じ (setup.sh は再起動しない)
+- root 権限が必要なので `setup.sh` の途中で sudo のパスワードを聞かれる (`pmset` と同じ)
+- 設定内容の確認: `plutil -p /private/var/db/com.apple.xpc.launchd/config/user.plist`
   (`launchctl config` に現在値を表示するサブコマンドは無い)
 - 再起動後の実効値の確認: `launchctl getenv PATH`
 - 解除: 上記 plist を削除して再起動

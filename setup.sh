@@ -64,6 +64,36 @@ if [ "$(uname)" == 'Darwin' ]; then
   sudo pmset -c sleep 0
 fi
 
+# launchd user path (macOS)
+# Dock/Spotlight から起動した GUI アプリは zsh を経由しないため PATH が launchd 既定の
+# /usr/bin:/bin:/usr/sbin:/sbin になり /usr/local/bin を含まない。PyCharm の Docker 連携が
+# /usr/local/bin/docker-credential-desktop を解決できず認証エラーになるのでここで足す。
+# Homebrew / mise shims は意図的に入れない (GUI 起動のアプリが mise/brew 管理下の
+# バージョンを暗黙に拾わないようにする。シェル側は zsh の設定で解決済み)。
+# 既存の登録値を壊さないよう、値を全部書き換えるのではなく先頭に /usr/local/bin: を足す。
+if [ "$(uname)" == 'Darwin' ]; then
+  launchd_config='/private/var/db/com.apple.xpc.launchd/config/user.plist'
+  # 現在の登録値を取得する。launchctl が書くキー名 (PathEnvironmentVariable) を直接読み、
+  # 取れなければ plutil -p の `=> "<値>"` から拾う (キー名の変更に備えたフォールバック)。
+  launchd_path="$(plutil -extract PathEnvironmentVariable raw "${launchd_config}" 2>/dev/null \
+    || plutil -p "${launchd_config}" 2>/dev/null | sed -n 's/.*=> "\(.*\)"$/\1/p' | head -n 1)"
+  # 未登録なら launchd の既定 PATH (_CS_PATH = /usr/bin:/bin:/usr/sbin:/sbin) が基準になる
+  if [ -z "${launchd_path}" ]; then
+    launchd_path="$(getconf PATH)"
+  fi
+  case ":${launchd_path}:" in
+    *:/usr/local/bin:*)
+      # 追加済み。無駄な sudo プロンプトを出さないため何もしない
+      echo "skip launchctl config user path (/usr/local/bin already in ${launchd_path})"
+      ;;
+    *)
+      sudo launchctl config user path "/usr/local/bin:${launchd_path}"
+      # launchctl config は plist を書くだけで、読まれるのは次回 boot 時
+      echo "launchctl config user path = /usr/local/bin:${launchd_path} (reboot required)"
+      ;;
+  esac
+fi
+
 # git ssh signing (macOS)
 # Claude Desktop など SSH_AUTH_SOCK が macOS 標準 ssh-agent socket に固定される
 # 環境でも git 署名が通るよう、Bitwarden socket を強制する wrapper を指定する。

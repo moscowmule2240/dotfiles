@@ -74,10 +74,18 @@ Claude Desktop 等 `SSH_AUTH_SOCK` が macOS 標準 agent に固定される環�
 ### GUI アプリの PATH (macOS)
 
 Dock 起動のアプリは launchd 既定 PATH (`/usr/local/bin` を含まない) を継承するため、
-`sudo launchctl config user path …` で `/usr/local/bin` を足す運用。
-これは `$HOME` 外のシステム領域 (`/private/var/db/com.apple.xpc.launchd/`) を書き換え、
-sudo と再起動を要するので **setup.sh では自動化せず手動手順として扱う**
-(この方針を変えて setup.sh に取り込まないこと)。手順と却下した代替案は [README.md](README.md) を参照。
+setup.sh が `sudo launchctl config user path` で `/usr/local/bin` を足す。
+
+- `$HOME` 外のシステム領域 (`/private/var/db/com.apple.xpc.launchd/config/user.plist`) を
+  書き換えるので **symlink 戦略の対象外**。sudo が必要 (`pmset` と同じ扱い) で、
+  反映は次回 boot 時 (setup.sh は再起動しない)
+- **値を固定文字列で上書きしない。** 現在の登録値を読み、`/usr/local/bin` を含まなければ
+  先頭に足して再登録し、含んでいれば何もしない (他の目的で登録されたパスを消さないため)。
+  未登録時の基準値は `getconf PATH`
+- 登録値の読み出しはキー名 `PathEnvironmentVariable` を直接見て、失敗したら `plutil -p` の
+  出力から拾うフォールバックを持つ
+
+3 パターンの挙動と却下した代替案は [README.md](README.md) を参照。
 
 ### スリープ管理 (macOS)
 
