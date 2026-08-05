@@ -96,5 +96,7 @@ pmset は idle sleep のスケジュールのみ管理 (バッテリ 60 分 / �
 ## 規約
 
 - コミットメッセージは Conventional Commits 形式 (`feat:` / `chore:` 等)、本文は英語
+- コミットメッセージの先頭に、内容を表す絵文字を 1 つ付ける (例: `✨ feat: add launchd PATH configuration`、
+  `🐛 fix: skip brew upgrade confirmation prompt`)。絵文字はショートコード (`:sparkles:`) ではなく実体で書く
 - スクリプト内コメントは日本語。「なぜそうするか」(例: cask/formula 名の衝突、`~` 非展開) を書く
 - パッケージリスト (`*.txt`) はアルファベット順を維持する
