@@ -119,5 +119,11 @@ pmset は idle sleep のスケジュールのみ管理 (バッテリ 60 分 / �
 - コミットメッセージは Conventional Commits 形式 (`feat:` / `chore:` 等)、本文は英語
 - コミットメッセージの先頭に、内容を表す絵文字を 1 つ付ける (例: `✨ feat: add launchd PATH configuration`、
   `🐛 fix: skip brew upgrade confirmation prompt`)。絵文字はショートコード (`:sparkles:`) ではなく実体で書く
+- **判断やトレードオフを含む変更は subject 1 行で終わらせず、body に「問題 → 採った方法 →
+  却下した代替案とその理由」を書く** (既存の例: `05da534` の launchd PATH、`feefc93`)。
+  設定方式の選択・既定値の変更・公開範囲の判断など、後から「なぜこうしたか」が問われるものが対象。
+  パッケージ追加や submodule ポインタの bump のような機械的な変更は subject だけでよい
+  - public なので、**body にも社内ツール名・社内ホスト名等は書かない**。
+    理由の説明にそれらが要る場合は抽象化して書くか、dotmine 側のコミットに書く
 - スクリプト内コメントは日本語。「なぜそうするか」(例: cask/formula 名の衝突、`~` 非展開) を書く
 - パッケージリスト (`*.txt`) はアルファベット順を維持する
