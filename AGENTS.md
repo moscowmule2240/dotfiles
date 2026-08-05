@@ -116,18 +116,17 @@ pmset は idle sleep のスケジュールのみ管理 (バッテリ 60 分 / �
 
 ## 規約
 
-- コミットメッセージは Conventional Commits 形式 (`feat:` / `chore:` 等)、本文は英語
-- コミットメッセージの先頭に、内容を表す絵文字を 1 つ付ける (例: `✨ feat: add launchd PATH configuration`、
-  `🐛 fix: skip brew upgrade confirmation prompt`)。絵文字はショートコード (`:sparkles:`) ではなく実体で書く
+- コミットメッセージは**先頭に内容を表す絵文字 1 つ + Conventional Commits 形式、本文は英語**
+  (例: `✨ feat: add launchd PATH configuration`、`🐛 fix: skip brew upgrade confirmation prompt`)。
+  絵文字はショートコード (`:sparkles:`) ではなく実体で書く
 - **判断やトレードオフを含む変更は subject 1 行で終わらせず、body に「問題 → 採った方法 →
   却下した代替案とその理由」を書く** (既存の例: `05da534` の launchd PATH、`feefc93`)。
   設定方式の選択・既定値の変更・公開範囲の判断など、後から「なぜこうしたか」が問われるものが対象。
-  パッケージ追加や submodule ポインタの bump のような機械的な変更は subject だけでよい
+  パッケージ追加のような機械的な変更は subject だけでよい
   - public なので、**body にも社内ツール名・社内ホスト名等は書かない**。
     理由の説明にそれらが要る場合は抽象化して書くか、dotmine 側のコミットに書く
-- **dotmine のポインタ更新は `⬆️ chore: bump dotmine submodule` に留める。** subject にも body にも
-  dotmine 側で何を変えたかを書かない (private の変更内容が public の履歴に残るため)。
-  ファイル名も対象。「汎用的な名前だから」を判断材料にしない — 次が固有名とは限らない。
-  何を変えたかは dotmine 側のコミットに書けばよく、public 側で説明する必要はない
+- **dotmine のポインタ更新は `⬆️ chore: bump dotmine submodule` の 1 行に固定する。**
+  dotmine 側で何を変えたかを subject にも body にも書かない (private の変更内容が public の履歴に残るため)。
+  ファイル名も対象で、「汎用的な名前だから」を判断材料にしない。理由は dotmine 側のコミットに書く
 - スクリプト内コメントは日本語。「なぜそうするか」(例: cask/formula 名の衝突、`~` 非展開) を書く
 - パッケージリスト (`*.txt`) はアルファベット順を維持する
