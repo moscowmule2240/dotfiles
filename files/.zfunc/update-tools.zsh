@@ -6,6 +6,9 @@
 # brew 6.0 以降は upgrade 前に [y/n] を聞く ask mode が既定なので --yes で無効化する。
 # 環境変数 HOMEBREW_NO_ASK でも消せるが、それだと手打ちの brew upgrade まで
 # 無確認になるため、対象を明示しているこの関数の中だけに閉じる。
+# cask を名前で列挙する限り --greedy は不要 (Cask::Upgrade.outdated_casks は
+# 名前指定時に greedy: true 固定で判定するため、auto_updates な cask も対象になる)。
+# --greedy が要るのは対象を指定せず brew upgrade する場合。
 update-tools() {
   brew update
   brew upgrade --yes --cask \
@@ -21,6 +24,7 @@ update-tools() {
     mysqlworkbench \
     onedrive \
     pycharm \
+    typeless \
     visual-studio-code
   brew upgrade --yes --formula \
     htop \
