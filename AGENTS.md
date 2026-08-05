@@ -65,6 +65,19 @@ brew リストと mise の対象は対応関係を保って更新すること。
 public な dotfiles 側のコミットに dotmine の内容を持ち込まないこと。
 dotmine の変更が絡む場合はサブモジュール側でコミットしてからポインタを更新する。
 
+どちらに置くかは **GitHub 上に出て困るか** で判断する。困るなら dotmine。
+
+| 置き場 | 対象 | 例 |
+|---|---|---|
+| dotfiles (public) | 公開して困らない設定と、OSS ツールの導入手順 | brew / mise / choco のパッケージリスト、共通の zsh・git 設定、setup スクリプト本体、symlink 戦略 |
+| dotmine (private) | 秘密情報・個人を特定する情報・組織固有の情報 | SSH 鍵と `known_hosts` / `authorized_keys`、aws / gcloud の認証を伴う設定、`.netrc`、氏名やメールを含む gitconfig、ライセンスキー、社内 tap の formula |
+
+公開できない設定が要るときは、**実体を dotmine に置き、こちら側にはリンクや呼び出しだけを残す**
+(既存の例: `files/.gitconfig` は `[include] path = ~/.gitconfig-mine` と書くだけで、実体は dotmine 側)。
+逆に、公開して困らないものを dotmine に抱えない。両方に同じ設定を置いて二重管理しない。
+
+**dotmine 側の規約はこちらとは別**。詳細は `dotmine/AGENTS.md` を参照 (コミット本文の言語が違う)。
+
 ### git SSH 署名 (macOS)
 
 Claude Desktop 等 `SSH_AUTH_SOCK` が macOS 標準 agent に固定される環境でも署名が通るよう、
