@@ -24,4 +24,5 @@ claude
 bitwarden
 GoogleJapaneseInput
 googledrive
+scrcpy
 typeless
