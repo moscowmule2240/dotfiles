@@ -121,15 +121,19 @@ choco install mise -y
 mise install
 
 # choco packages (GUI アプリ等。mise で扱えない Windows ソフトを choco で管理)
-# '#' 始まりの行と空行はスキップする。
+# '#' 始まりの行と空行はスキップする。行末の '#' 以降もコメントとして落とすので、
+# パッケージ名の後に choco のオプションと、それを付ける理由を並べて書ける。
 $chocoPackagesFile = "$PSScriptRoot\choco\packages.txt"
 if (Test-Path $chocoPackagesFile) {
     Get-Content $chocoPackagesFile |
-        ForEach-Object { $_.Trim() } |
-        Where-Object { $_ -and -not $_.StartsWith('#') } |
+        ForEach-Object { ($_ -replace '#.*$', '').Trim() } |
+        Where-Object { $_ } |
         ForEach-Object {
-            Write-Host "choco install $_ -y"
-            choco install $_ -y
+            # 空白区切りにして splat で渡す。1 つの文字列のまま渡すと
+            # 「パッケージ名 + オプション」全体が 1 つのパッケージ名として解釈される。
+            $chocoArgs = $_ -split '\s+'
+            Write-Host "choco install $chocoArgs -y"
+            choco install @chocoArgs -y
         }
 }
 

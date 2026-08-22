@@ -1,6 +1,7 @@
 # Windows GUI / アプリのインストールリスト (setup.ps1 が choco install -y で一括導入)
 # CLI・ランタイムは mise (files/.config/mise/config.toml) で管理。ここは GUI 中心。
-# '#' 始まりの行と空行は setup.ps1 側で無視される。
+# '#' 始まりの行と空行は setup.ps1 側で無視される。行末の '#' 以降も同様なので、
+# パッケージ名の後に choco のオプションを書き、その理由を行末コメントに残せる。
 
 # --- ブラウザ ---
 googlechrome
@@ -26,3 +27,10 @@ GoogleJapaneseInput
 googledrive
 scrcpy
 typeless
+
+# --- Android アプリ解析 ---
+# choco 上の依存は javaruntime (実体は jre8) だが、Windows の Java は mise の
+# temurin-21 に一本化しているため依存解決をさせない。setup.ps1 では mise install が
+# choco のループより先に走るので、この時点で java は PATH に入っている。
+apktool --ignore-dependencies
+jadx --ignore-dependencies
