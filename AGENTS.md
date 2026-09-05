@@ -90,7 +90,10 @@ dotmine の変更が絡む場合はサブモジュール側でコミットして
 
 Claude Desktop 等 `SSH_AUTH_SOCK` が macOS 標準 agent に固定される環境でも署名が通るよう、
 `files/bin/ssh-{keygen,add}-bitwarden.sh` wrapper で Bitwarden の socket を強制している。
-`gpg.ssh.*` は `~` を展開しないため設定は絶対パスで書く (setup.sh が生成)。
+`gpg.ssh.program` / `gpg.ssh.defaultKeyCommand` は `~` を展開しないため絶対パスで書く (setup.sh が生成)。
+一方 `gpg.ssh.allowedSignersFile` は `~` を展開する (HOME を差し替えて実測) ので、
+`files/.gitconfig` に `~/.ssh/allowed_signers` と直接書く。検証用の対応表 (principal と公開鍵) は
+メールアドレスを含むため dotmine 側に置き、dotmine の setup スクリプトが `~/.ssh/` へ symlink する。
 
 ### GUI アプリの PATH (macOS)
 
