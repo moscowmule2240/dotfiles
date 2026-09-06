@@ -59,10 +59,6 @@ eval "$(mise activate zsh)"
 # editor
 export EDITOR=vim
 
-# android
-export ANDROID_SDK_ROOT=$(brew --prefix)/share/android-sdk
-export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
-
 # coreutils
 export PATH="$PATH:$(brew --prefix coreutils)/libexec/gnubin"
 
