@@ -88,6 +88,9 @@ export MYSQLCLIENT_CFLAGS="-I${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_V
 # chisiki
 [[ -r ~/.zfunc/chisiki.zsh ]] && source ~/.zfunc/chisiki.zsh
 
+# fix-cask (update-tools が呼ぶので先に読む)
+[[ -r ~/.zfunc/fix-cask.zsh ]] && source ~/.zfunc/fix-cask.zsh
+
 # update-tools
 [[ -r ~/.zfunc/update-tools.zsh ]] && source ~/.zfunc/update-tools.zsh
 

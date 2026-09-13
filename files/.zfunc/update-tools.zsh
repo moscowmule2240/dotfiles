@@ -11,21 +11,28 @@
 # --greedy が要るのは対象を指定せず brew upgrade する場合。
 update-tools() {
   brew update
-  brew upgrade --yes --cask \
-    antigravity-cli \
-    antigravity-ide \
-    bitwarden \
-    claude \
-    claude-code@latest \
-    comet \
-    docker-desktop \
-    google-chrome \
-    iterm2 \
-    mysqlworkbench \
-    onedrive \
-    pycharm \
-    typeless \
+  local -a casks=(
+    antigravity-cli
+    antigravity-ide
+    bitwarden
+    claude
+    claude-code@latest
+    comet
+    docker-desktop
+    google-chrome
+    iterm2
+    mysqlworkbench
+    onedrive
+    pycharm
+    typeless
     visual-studio-code
+  )
+  # 自己更新で brew の symlink を実ファイルに潰す cask (antigravity-cli 等) を upgrade の前に直す。
+  # 潰れたまま upgrade すると旧版の削除後に新版のリンクで衝突して落ち、Caskroom が
+  # .metadata だけの抜け殻になって以後 "Cask ... is not installed" になる。
+  # fix-cask は正常な cask には何もしないので、リストごと通して漏れを防ぐ。
+  local c; for c in $casks; do fix-cask "$c"; done
+  brew upgrade --yes --cask $casks
   brew upgrade --yes --formula \
     htop \
     mise \
