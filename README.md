@@ -15,18 +15,28 @@
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 ### zsh
+
+ログインシェルを Homebrew の zsh にする。
+
+    eval "$(/opt/homebrew/bin/brew shellenv)"
     brew install zsh
-    command -v zsh | sudo tee -a /etc/shells
-    chsh -s $(command -v zsh)
+    grep -qx "$(brew --prefix)/bin/zsh" /etc/shells || echo "$(brew --prefix)/bin/zsh" | sudo tee -a /etc/shells
+    chsh -s "$(brew --prefix)/bin/zsh"
+
+- `brew shellenv` は今のシェルにだけ効かせる。Homebrew のインストーラーが案内する `~/.zprofile` への追記はしない
+  (実ファイルができると setup.sh の `ln -s` が失敗する。以後の PATH は setup.sh が張る `.zprofile` が通す)
+- zsh のパスを `command -v zsh` で探さない。setup.sh を流す前の PATH では `/opt/homebrew/bin` が無いか
+  `/bin` より後ろにあり、`/bin/zsh` が返る
+- ログインシェルには固定の symlink `/opt/homebrew/bin/zsh` を指定する。Cellar の実パス
+  (`/opt/homebrew/Cellar/zsh/<version>/bin/zsh`) は zsh の更新後に `brew cleanup` で消え、
+  ログインシェルが存在しない状態になる
+- 設定アプリ (ユーザとグループ → 詳細オプション) では変更しない。`/etc/shells` に登録されない
 
 ### dotfiles
 
 #### Install
 
     ./setup.sh
-
-### login shell
-「設定」->「ユーザとグループ」->「ユーザ名」右クリック->「詳細オプション」->「ログインシェル」変更 `/opt/homebrew/bin/zsh`
 
 ### GUI アプリの PATH (launchd)
 
