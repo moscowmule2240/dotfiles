@@ -35,3 +35,8 @@
     path = ~/.gitconfig-macos
 [include]
     path = ~/.gitconfig-mine
+# マシン固有の上書き (リポジトリ管理外)。後勝ちなので ~/.gitconfig-mine より後に置く。
+# ~/.gitconfig-macos は setup.sh が毎回作り直すため、そちらには書かない。
+# ファイルが無ければ git は黙って無視する
+[include]
+    path = ~/.gitconfig-local

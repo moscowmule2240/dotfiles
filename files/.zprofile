@@ -98,3 +98,6 @@ export MYSQLCLIENT_CFLAGS="-I${HOMEBREW_CELLAR}/${BREW_FORMULAE_MYSQL}/${MYSQL_V
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
+
+# マシン固有の上書き (リポジトリ管理外)。上の設定を上書きできるよう末尾で読む
+[[ -r ~/.zprofile.local ]] && source ~/.zprofile.local
