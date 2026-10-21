@@ -13,6 +13,7 @@ awscli = { version = "latest", symlink_bins = "true", os = ["linux", "macos"] }
 duckdb = { version = "latest", os = ["linux", "macos"] }
 ecspresso = { version = "latest", os = ["linux", "macos"] }
 fzf = { version = "latest", os = ["linux", "macos"] }
+mitmproxy = { version = "latest", os = ["linux", "macos"] }
 python = { version = "latest", os = ["linux", "macos"] }
 redis = { version = "latest", os = ["linux", "macos"] }
 ripgrep = { version = "latest", os = ["linux", "macos"] }

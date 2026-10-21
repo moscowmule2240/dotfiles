@@ -39,8 +39,8 @@ update-tools() {
     zsh \
     zsh-completions \
     zsh-git-prompt
-  # mise 管理に移したもの (旧 brew formula 相当)
+  # mise 管理に移したもの (旧 brew formula / uv tool 相当)
   # --yes: 確認プロンプトを自動承諾して対話なしで進める
-  mise upgrade --yes bitwarden gh
+  mise upgrade --yes bitwarden gh mitmproxy
   brew cleanup -s
 }
