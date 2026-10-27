@@ -1,7 +1,47 @@
 #!/usr/bin/env pwsh
 
-# Check if running on Windows and require admin privileges for symbolic links
-if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
+# 本体は pwsh (PowerShell 7) 前提で書いている (dotmine/setup.ps1 の 3 引数以上の Join-Path 等は
+# Windows PowerShell 5.1 では動かない)。素の Windows には pwsh が無いため、5.1 で起動されたら
+# choco で powershell-core を入れてから pwsh で起動し直す。choco install は管理者権限が要るので、
+# 昇格は 5.1 のうちに済ませる。choco 自体は README の手順で先に入れておく。
+if ($PSVersionTable.PSEdition -ne "Core") {
+    $scriptPath = $MyInvocation.MyCommand.Path
+    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $isAdmin) {
+        Write-Host "Restarting with administrator privileges..."
+        Start-Process powershell -Verb RunAs -ArgumentList "-NoExit", "-File", "`"$scriptPath`""
+        exit
+    }
+
+    if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) {
+        if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+            Write-Error "choco not found. Install Chocolatey first (see README), then run setup.ps1 again."
+            exit 1
+        }
+        Write-Host "choco install powershell-core -y"
+        choco install powershell-core -y
+        # 3010 はインストール成功・再起動推奨。pwsh 自体はこのまま起動できる
+        if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 3010) {
+            Write-Error "choco install powershell-core failed (exit code $LASTEXITCODE)."
+            exit 1
+        }
+        # choco が足した PATH は実行中のプロセスに反映されないため、レジストリから読み直す
+        $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
+    }
+
+    # PATH を読み直しても見つからない場合に備え、既定のインストール先も見る
+    $pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+    if (-not $pwsh) {
+        $pwsh = Join-Path $env:ProgramFiles "PowerShell\7\pwsh.exe"
+    }
+    Write-Host "Restarting with pwsh..."
+    # 既に管理者なので RunAs は付けない (子プロセスは昇格を引き継ぐ)
+    Start-Process $pwsh -ArgumentList "-NoExit", "-File", "`"$scriptPath`""
+    exit
+}
+
+# Windows ではシンボリックリンクの作成に管理者権限が要る
+if ($IsWindows) {
     $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
     if (-not $isAdmin) {

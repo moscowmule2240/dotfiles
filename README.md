@@ -123,17 +123,22 @@ Apple 標準 + Docker Desktop の CLI までに絞り、GUI から起動した�
 
     Bitwarden Enable SSH agent
 
+### chocolatey
+
+#### Install
+
+setup.ps1 が choco を使うため、先に入れる。
+
+    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
 ### dotfiles
 
 #### Install
 
     $ ./setup.ps1
 
-### chocolatey
-
-#### Install
-
-    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+Windows PowerShell 5.1 から起動してよい。pwsh (PowerShell 7) が無ければ choco で `powershell-core` を入れ、
+pwsh で起動し直す (本体は pwsh 前提)。
 
 ### tools (mise)
 

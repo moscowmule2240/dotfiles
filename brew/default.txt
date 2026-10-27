@@ -12,6 +12,7 @@ mise
 mysql-client
 mysql-client@8.0
 poppler
+powershell
 pstree
 source-highlight
 tree

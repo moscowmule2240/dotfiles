@@ -8,6 +8,7 @@ googlechrome
 comet
 
 # --- 開発ツール ---
+powershell-core   # setup.ps1 が Windows PowerShell 5.1 で起動されたとき冒頭で先に入れる。ここでは更新用に並べておく
 vscode
 pycharm
 docker-desktop
