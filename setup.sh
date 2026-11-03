@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# 以降は ${PWD} をリポジトリのルートとして参照するため、別のディレクトリーから流したら止める。
+if [ "${PWD}" != "$(cd "$(dirname "$0")" && pwd)" ]; then
+  echo "error: setup.sh はリポジトリのルートで実行する (${PWD} で実行された)" >&2
+  exit 1
+fi
+
+# ルートを本人だけが辿れるようにする。submodule の dotmine は公開しない設定を持ち、git の object も
+# 作業ツリーのファイルも同じグループの他アカウントから読める権限で作られるため、ルートごと閉じる。
+# brew などの長い手順より前に掛け、clone から閉じるまでの時間を短くする。
+echo "execute chmod 700 ${PWD}"
+if ! chmod 700 "${PWD}"; then
+  echo "error: chmod 700 ${PWD} に失敗した (以降の手順は未実行。直して setup.sh を再実行する)" >&2
+  exit 1
+fi
+
 # .file
 # .gitconfig-macos は setup.sh で実体ファイルとして生成するので除外する
 for file in ${PWD}/files/.*; do
@@ -52,7 +67,11 @@ fi
 brew cleanup -s
 
 # dotmine
-bash dotmine/setup.sh
+# dotmine/setup.sh は権限の設定に失敗したときだけ非 0 で終わる。その状態で先へ進めないよう止める。
+if ! bash dotmine/setup.sh; then
+  echo "error: dotmine/setup.sh が失敗した (以降の手順は未実行。直して setup.sh を再実行する)" >&2
+  exit 1
+fi
 
 # pmset (macOS)
 # 「蓋閉じでスリープしない」は disablesleep だと手動スリープも止まるので Amphetamine
