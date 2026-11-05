@@ -17,9 +17,9 @@ mysql.workbench
 gcloudsdk
 
 # --- AI / エディタ ---
+antigravity-cli
+antigravity-ide
 claude
-# antigravity-ide   # 自作 choco パッケージを公開後に有効化
-# antigravity-cli   # 自作 choco パッケージを公開後に有効化
 # claude-code は Windows では mise 管理 (config.toml) のためここには入れない
 
 # --- ユーティリティ ---
