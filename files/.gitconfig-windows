@@ -1,6 +1,8 @@
 [core]
     sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
     autocrlf = true
+[http]
+    sslBackend = schannel
 [gpg "ssh"]
     program = C:/Windows/System32/OpenSSH/ssh-keygen.exe
     defaultKeyCommand = C:/WINDOWS/System32/OpenSSH/ssh-add.exe -L
