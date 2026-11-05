@@ -4,30 +4,46 @@
 # パッケージ名の後に choco のオプションを書き、その理由を行末コメントに残せる。
 
 # --- ブラウザ ---
-googlechrome
+brave
 comet
+firefox
+googlechrome
 
 # --- 開発ツール ---
-powershell-core   # setup.ps1 が Windows PowerShell 5.1 で起動されたとき冒頭で先に入れる。ここでは更新用に並べておく
-vscode
-pycharm
+awscli
 docker-desktop
 dotnet-sdk
-mysql.workbench
 gcloudsdk
+git
+mise   # setup.ps1 で mise install の前に先に入れる。ここでは更新用に並べておく
+mysql.workbench
+powershell-core   # setup.ps1 が Windows PowerShell 5.1 で起動されたとき冒頭で先に入れる。ここでは更新用に並べておく
+pycharm
+visualstudio2022community
+vscode
 
 # --- AI / エディタ ---
 antigravity-cli
 antigravity-ide
-claude
-# claude-code は Windows では mise 管理 (config.toml) のためここには入れない
+claude-code
 
 # --- ユーティリティ ---
+7zip
 bitwarden
-GoogleJapaneseInput
+chocolateygui
+discord
 googledrive
+GoogleJapaneseInput
+inkscape
+powertoys
+rufus
 scrcpy
+spotify
+steam
+tailscale
 typeless
+ultravnc
+vlc
 
 # --- Android アプリ解析 ---
 # choco 上の依存は javaruntime (実体は jre8) だが、Windows の Java は mise の
@@ -35,3 +51,7 @@ typeless
 # choco のループより先に走るので、この時点で java は PATH に入っている。
 apktool --ignore-dependencies
 jadx --ignore-dependencies
+
+# --- リバースエンジニアリング ---
+cheatengine
+ghidra
