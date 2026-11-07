@@ -36,3 +36,8 @@ nosetests.xml
 .serena
 
 **/.claude/settings.local.json
+
+# Work files at a repository root: .temp/<purpose>/ for disposable output, .archive/ for backups kept for good.
+# No trailing slash: inside git worktrees they are symlinks to the main checkout, and "dir/" does not match a symlink.
+.temp
+.archive
