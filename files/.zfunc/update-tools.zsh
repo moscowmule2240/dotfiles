@@ -43,4 +43,16 @@ update-tools() {
   # --yes: 確認プロンプトを自動承諾して対話なしで進める
   mise upgrade --yes bitwarden gh mitmproxy
   brew cleanup -s
+
+  # Antigravity の permissions を、クラウドストレージのフォルダーの増減に合わせて書き直す。
+  # 実体は private な dotmine 側にあり、dotmine が無いマシンでは飛ばす。
+  # DOTFILES_ROOT は .zsh_aliases が決める。読み込まれていないシェルでは黙って飛ばさずに知らせる。
+  if [[ -z $DOTFILES_ROOT ]]; then
+    print -u2 "update-tools: DOTFILES_ROOT is not set; skipped refreshing Antigravity permissions"
+    return
+  fi
+  local agy_permissions="${DOTFILES_ROOT}/dotmine/antigravity/update-permissions.sh"
+  if [[ -x $agy_permissions ]]; then
+    $agy_permissions
+  fi
 }
