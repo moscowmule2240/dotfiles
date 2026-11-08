@@ -56,7 +56,9 @@ jobs:
         if: github.repository == 'moscowmule2240/dotfiles'
         run: bash .bash-compat/ci/bash-compat/test.sh
 
+      # 検査の本体を変えたテストが落ちても、検査そのものは流す (別々の合図で、片方の失敗でもう片方を隠さない)
       - name: check
+        if: ${{ !cancelled() }}
         env:
           EVENT: ${{ github.event_name }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
