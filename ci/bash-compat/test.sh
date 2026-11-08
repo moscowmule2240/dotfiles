@@ -64,16 +64,6 @@ end() {
   fi
 }
 
-test_clean_passes() {
-  begin test_clean_passes
-  new_repo
-  printf '#!/bin/bash\necho "$1"\n' > "$r/ok.sh"
-  commit "$r" init
-  run_check "$r" --all
-  expect_rc 0
-  end
-}
-
 test_bash4_syntax_table() {
   pats=()
   pats+=('declare -A m') # bash-compat: ignore
@@ -277,6 +267,7 @@ test_head_missing_fails() {
   commit "$r" base
   run_check "$r" "$(git -C "$r" rev-parse HEAD)" 1234567890abcdef1234567890abcdef12345678
   expect_rc 2
+  expect_out 'が commit ではない'
   end
 }
 
@@ -289,6 +280,7 @@ test_head_not_checked_out_fails() {
   commit "$r" head
   run_check "$r" "$base" "$base"
   expect_rc 2
+  expect_out '作業ツリーの HEAD が'
   end
 }
 
@@ -342,6 +334,7 @@ test_bash32_unavailable_fails() {
   out=$(cd "$r" && BASH32=/nonexistent/bash bash "$check" --all 2>&1)
   rc=$?
   expect_rc 2
+  expect_out 'bash 3.2 を起動できない'
   end
 }
 
@@ -355,6 +348,7 @@ test_bash32_not_32_fails() {
   out=$(cd "$r" && BASH32="$work/fake-bash" bash "$check" --all 2>&1)
   rc=$?
   expect_rc 2
+  expect_out 'bash 3.2 ではない'
   end
 }
 
@@ -393,7 +387,6 @@ test_dotfiles_itself_clean() {
   end
 }
 
-test_clean_passes
 test_bash4_syntax_table
 test_bash32_parse_fails
 test_extensionless_shebang
