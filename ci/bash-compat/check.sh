@@ -21,8 +21,6 @@ IMAGE='bash:3.2.57@sha256:44900632c47e54937a3c2d7de2b4d05af7aee6d269c71c31162048
 MARK_LINUX_RE='^[[:space:]]*# bash-compat: linux-only'
 # 足した行のうち、検査を外す書き方。ShellCheck の指示は書き方によらず全部 (disable 以外の shell= なども効き方を変える)
 WEAKEN_LINE_RE='#[[:space:]]*shellcheck[[:space:]]|# bash-compat: ignore'
-# 拡張子の無いスクリプトを shebang で拾う。env -S の形も拾う (外して黙って検査から逃げられないように)
-SHEBANG_RE='^#![[:space:]]*(/usr/bin/env[[:space:]]+(-S[[:space:]]+)?)?(/[^[:space:]]*/)?(ba)?sh([[:space:]]|$)'
 
 # bash 3.2 の bash -n は通るが、3.2 で実行すると壊れる・結果が変わる構文。正規表現と説明を並べる。
 # case の ;& や |&、&>> は bash 3.2 の bash -n が構文エラーにするのでここには入れない
@@ -110,15 +108,39 @@ notice() {
   fi
 }
 
-# 1 行目が sh・bash の shebang か (zsh は外す)
+# 1 行目の shebang が起動するプログラムの名前 (basename)。env の後ろのオプション・変数の指定・-u NAME は読み飛ばす
+# (env -S LC_ALL=C bash・env -i bash・/bin/env bash を拾い、外して黙って検査から逃げられないようにする)。shebang でなければ空
+shebang_interp() {
+  case "$1" in '#!'*) ;; *) return 0 ;; esac
+  set -f
+  # shellcheck disable=SC2206  # shebang を空白で語に分ける (glob は set -f で止めている)
+  words=(${1#??})
+  set +f
+  [ "${#words[@]}" -gt 0 ] || return 0
+  i=0
+  if [ "${words[0]##*/}" = env ]; then
+    i=1
+    while [ "$i" -lt "${#words[@]}" ]; do
+      case "${words[$i]}" in
+        -u | --unset) i=$((i + 2)) ;;
+        -* | *=*) i=$((i + 1)) ;;
+        *) break ;;
+      esac
+    done
+    [ "$i" -lt "${#words[@]}" ] || return 0
+  fi
+  printf '%s' "${words[$i]##*/}"
+}
+
+# 1 行目が sh・bash の shebang か
 has_shell_shebang() {
-  case "$1" in '#!'*zsh*) return 1 ;; esac
-  printf '%s\n' "$1" | grep -aEq "$SHEBANG_RE"
+  case "$(shebang_interp "$1")" in bash | sh) return 0 ;; esac
+  return 1
 }
 
 # パスと 1 行目から、検査の対象かを決める。zsh の shebang は拡張子が .sh でも外す
 is_target_by() {
-  case "$2" in '#!'*zsh*) return 1 ;; esac
+  [ "$(shebang_interp "$2")" = zsh ] && return 1
   case "$1" in *.sh | *.bash) return 0 ;; esac
   # shebang で拾うのは拡張子の無いファイルだけ。sh で起動して python へ渡す .py の polyglot などを外す
   # (.sh からほかの拡張子への改名は「検査の対象から外れた」の警告で拾う)
@@ -139,7 +161,7 @@ first_line_of() {
   printf '%s' "$first"
 }
 
-# 作業ツリーのファイルが検査の対象か。symlink は指す先の側で検査するので外す
+# 作業ツリーのファイルが検査の対象か。symlink は外す (指す先が対象のファイルなら、そちらが検査される。指す先が対象外なら検査されない)
 is_target() {
   [ -f "$1" ] && [ ! -L "$1" ] || return 1
   is_target_by "$1" "$(first_line_of "$1")"
@@ -220,6 +242,7 @@ if [ "$mode" = diff ]; then
   # 書き換えて拡張子も shebang も無い名前へ移すと改名として拾えず D と A になるので、消したことも知らせる
   git diff -z --name-status --no-ext-diff --diff-filter=MRTD -M "$merge_base" "$head" > "$tmp/status" || die "git diff が失敗した"
   : > "$tmp/renames"
+  : > "$tmp/deleted"
   while IFS= read -r -d '' st; do
     IFS= read -r -d '' old || break
     new=$old
@@ -227,21 +250,28 @@ if [ "$mode" = diff ]; then
     old_first=$(git show "$merge_base:$old" 2>/dev/null | sed -n '1p')
     is_target_by "$old" "$old_first" || continue
     case "$st" in
-      D) warn "$old" '' "検査の対象のファイルを消した。対象の外へ移していないか差分を見ること" ;;
+      # 消したファイルの警告は後ろにまとめて出す (GitHub の注釈は 1 step に 10 件までで、ほかの警告を埋めないように)
+      D) printf '%s\0' "$old" >> "$tmp/deleted" ;;
       *) is_target "$new" || warn "$old" '' "検査の対象から外れた ($new)。結果を信用せず差分を見ること" ;;
     esac
   done < "$tmp/status"
 
-  # bash の shebang があるのに、拡張子で検査の対象の外になるファイルを足した (.command への改名・書き換えを含む)
-  git diff -z --name-status --no-ext-diff --diff-filter=ACR -M "$merge_base" "$head" > "$tmp/added" || die "git diff が失敗した"
+  # bash の shebang があるのに、拡張子で検査の対象の外になるファイル。足したもの・改名したものと、
+  # 既存の対象外のファイル (.command・.zsh など) の shebang を bash に書き換えたもの
+  git diff -z --name-status --no-ext-diff --diff-filter=ACMRT -M "$merge_base" "$head" > "$tmp/added" || die "git diff が失敗した"
   while IFS= read -r -d '' st; do
     IFS= read -r -d '' new || break
     case "$st" in R* | C*) IFS= read -r -d '' new || break ;; esac
     [ -f "$new" ] && [ ! -L "$new" ] || continue
     is_target "$new" && continue
-    if has_shell_shebang "$(first_line_of "$new")"; then
-      warn "$new" '' "bash の shebang があるが、拡張子で検査の対象の外になる。結果を信用せず差分を見ること"
-    fi
+    has_shell_shebang "$(first_line_of "$new")" || continue
+    case "$st" in
+      M | T)
+        # もとから bash の shebang だったもの (sh と python の polyglot など) は、変えるたびには知らせない
+        has_shell_shebang "$(git show "$merge_base:$new" 2>/dev/null | sed -n '1p')" && continue
+        ;;
+    esac
+    warn "$new" '' "bash の shebang があるが、拡張子で検査の対象の外になる。結果を信用せず差分を見ること"
   done < "$tmp/added"
 
   while IFS= read -r -d '' f; do
@@ -251,9 +281,27 @@ if [ "$mode" = diff ]; then
       [ "$rn" = "$f" ] && old=$ro
     done < "$tmp/renames"
 
+    # base で対象だったか。対象外だったファイル (新しいファイル・.txt からの改名・shebang の追加) は、
+    # もとからあった目印と指示も、今回足したものとして扱う (対象外のうちに仕込んでおく手を拾う)
+    was_target=false
+    if git cat-file -e "$merge_base:$old" 2>/dev/null &&
+      is_target_by "$old" "$(git show "$merge_base:$old" 2>/dev/null | sed -n '1p')"; then
+      was_target=true
+    fi
+
     # Linux 専用の目印は、行を足さずに (上の行を消して) 先頭 10 行に入れても効くので、状態で比べる
-    if has_linux_marker < "$f" && ! git show "$merge_base:$old" 2>/dev/null | has_linux_marker; then
-      warn "$f" '' "Linux 専用の目印が効くようになった (bash 3.2 の検査が外れる)。結果を信用せず差分を見ること"
+    if has_linux_marker < "$f"; then
+      if ! $was_target || ! git show "$merge_base:$old" 2>/dev/null | has_linux_marker; then
+        warn "$f" '' "Linux 専用の目印が効くようになった (bash 3.2 の検査が外れる)。結果を信用せず差分を見ること"
+      fi
+    fi
+
+    if ! $was_target; then
+      grep -anE -- "$WEAKEN_LINE_RE" < "$f" > "$tmp/weaken" || true
+      while IFS= read -r hit; do
+        warn "$f" "${hit%%:*}" "検査を外す目印か ShellCheck の指示を足した。結果を信用せず差分を見ること"
+      done < "$tmp/weaken"
+      continue
     fi
 
     # 足した行の ignore の目印と ShellCheck の指示。.gitattributes の -diff でも行が見えるよう -a で取る。
@@ -278,6 +326,10 @@ if [ "$mode" = diff ]; then
       esac
     done < "$tmp/hunks"
   done < "$tmp/targets"
+
+  while IFS= read -r -d '' f; do
+    warn "$f" '' "検査の対象のファイルを消した。対象の外へ移していないか差分を見ること"
+  done < "$tmp/deleted"
 fi
 
 if [ ! -s "$tmp/targets" ]; then

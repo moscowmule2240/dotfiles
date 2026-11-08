@@ -475,6 +475,74 @@ test_rename_keeps_markers_quiet() {
   end
 }
 
+# 対象外だったファイルを対象にしたら、もとからある目印と指示も足したものとして警告する (改名・shebang の追加)
+test_untarget_to_target_warns() {
+  begin test_untarget_to_target_warns
+  new_repo
+  printf '# notes\n# bash-compat: linux-only\n# shellcheck disable=SC2034\n' > "$r/notes.txt"
+  printf '# bash-compat: linux-only\necho t\n' > "$r/tool"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  git -C "$r" mv notes.txt deploy.sh
+  printf 'declare -A m\n' >> "$r/deploy.sh" # bash-compat: ignore
+  printf '#!/bin/bash\n# bash-compat: linux-only\necho t\n' > "$r/tool"
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_out 'deploy.sh: warning'
+  expect_out 'deploy.sh:3: warning'
+  expect_out 'tool: warning'
+  end
+}
+
+# 対象外のファイル (.command など) の shebang を bash に書き換えたら警告する
+test_shebang_switched_to_bash_warns() {
+  begin test_shebang_switched_to_bash_warns
+  new_repo
+  printf '#!/bin/zsh\necho a\n' > "$r/run.command"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '#!/bin/bash\ndeclare -A m\n' > "$r/run.command" # bash-compat: ignore
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_out 'run.command: warning'
+  end
+}
+
+# env のオプションや変数の指定を挟んだ shebang、/bin/env も bash として拾う。zsh は引数の位置によらず外す
+test_env_shebang_variants() {
+  begin test_env_shebang_variants
+  new_repo
+  printf '#!/usr/bin/env -S LC_ALL=C bash\necho "${x,,}"\n' > "$r/t1" # bash-compat: ignore
+  printf '#!/usr/bin/env -i bash\necho "${x,,}"\n' > "$r/t2" # bash-compat: ignore
+  printf '#!/bin/env bash\necho "${x,,}"\n' > "$r/t3" # bash-compat: ignore
+  printf '#!/usr/bin/env -S zsh -f\ntypeset -A m\n' > "$r/z1" # bash-compat: ignore
+  commit "$r" init
+  run_check "$r" --all
+  expect_rc 1
+  expect_out 't1:2: bash4-syntax'
+  expect_out 't2:2: bash4-syntax'
+  expect_out 't3:2: bash4-syntax'
+  expect_no_out 'z1:'
+  end
+}
+
+# 消したファイルの警告は後ろに出す (GitHub の注釈は 1 step に 10 件までで、先の警告で埋まらないように)
+test_deleted_warnings_come_last() {
+  begin test_deleted_warnings_come_last
+  new_repo
+  for n in 1 2 3; do printf '#!/bin/bash\necho %s\n' "$n" > "$r/d$n.sh"; done
+  printf '#!/bin/bash\necho k\n' > "$r/k.sh"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  git -C "$r" rm -q d1.sh d2.sh d3.sh
+  printf '#!/bin/bash\n# bash-compat: linux-only\necho k\n' > "$r/k.sh"
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  first=$(printf '%s\n' "$out" | grep ': warning: ' | sed -n '1p')
+  case "$first" in k.sh*) ;; *) fail_because "最初の警告が k.sh ではない: $first" ;; esac
+  end
+}
+
 # 差分にあるのに作業ツリーに無いファイルは、黙って飛ばさず止める
 test_missing_worktree_file_fails() {
   begin test_missing_worktree_file_fails
@@ -581,6 +649,10 @@ test_marker_moved_into_head_warns
 test_literal_pathspec
 test_deleted_target_warns
 test_rename_keeps_markers_quiet
+test_untarget_to_target_warns
+test_shebang_switched_to_bash_warns
+test_env_shebang_variants
+test_deleted_warnings_come_last
 test_missing_worktree_file_fails
 test_plusplus_lines
 test_binary_looking_file
