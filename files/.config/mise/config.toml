@@ -16,6 +16,7 @@ mitmproxy = { version = "latest", os = ["linux", "macos"] }
 python = { version = "latest", os = ["linux", "macos"] }
 redis = { version = "latest", os = ["linux", "macos"] }
 ripgrep = { version = "latest", os = ["linux", "macos"] }
+shellcheck = { version = "latest", os = ["linux", "macos"] }
 
 # macOS 専用
 "aqua:mas-cli/mas" = { version = "latest", os = ["macos"] }
