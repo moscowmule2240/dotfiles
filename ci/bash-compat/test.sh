@@ -346,6 +346,20 @@ test_bash32_not_32_fails() {
   end
 }
 
+# source で読む隣のファイルが使う変数を、未使用 (SC2034) と言わない。source= の指示はスクリプトの場所から辿る
+test_shellcheck_follows_source() {
+  begin test_shellcheck_follows_source
+  new_repo
+  mkdir -p "$r/lib" "$r/bin"
+  printf '#!/bin/bash\necho "$GREETING"\n' > "$r/lib/common.sh"
+  printf '#!/bin/bash\nGREETING=hello\n# shellcheck source=../lib/common.sh\n. "$(dirname -- "$0")/../lib/common.sh"\n' > "$r/bin/main.sh"
+  commit "$r" init
+  run_check "$r" --all
+  expect_rc 0
+  expect_no_out 'SC2034'
+  end
+}
+
 # Docker の初回はイメージの取得のメッセージが stderr に出る。版の判定に混ぜない
 test_bash32_stderr_noise_ok() {
   begin test_bash32_stderr_noise_ok
@@ -384,6 +398,7 @@ test_weakening_changes_warn
 test_github_annotations
 test_bash32_unavailable_fails
 test_bash32_not_32_fails
+test_shellcheck_follows_source
 test_bash32_stderr_noise_ok
 test_dotfiles_itself_clean
 

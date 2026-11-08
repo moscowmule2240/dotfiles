@@ -281,11 +281,11 @@ EOF
   done < "$tmp/bash32-out"
 fi
 
-# ---- shellcheck (Linux 専用の目印のあるファイルも当てる)
+# ---- shellcheck (Linux 専用の目印のあるファイルも当てる)。source= の指示はスクリプトの場所から辿る (隣のファイルが使う変数を未使用と言わない)
 while IFS= read -r -d '' f; do
   shell_opt=()
   case "$(first_line_of "$f")" in '#!'*) ;; *) shell_opt=(-s bash) ;; esac
-  "$shellcheck_cmd" -S warning -f gcc ${shell_opt[@]+"${shell_opt[@]}"} -- "$f" > "$tmp/sc" 2>&1
+  "$shellcheck_cmd" -S warning -f gcc -x -P SCRIPTDIR ${shell_opt[@]+"${shell_opt[@]}"} -- "$f" > "$tmp/sc" 2>&1
   code=$?
   [ "$code" -le 1 ] || die "shellcheck が $f で失敗した: $(cat "$tmp/sc")"
   [ "$code" = 0 ] && continue
