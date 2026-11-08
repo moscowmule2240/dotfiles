@@ -40,7 +40,7 @@ commit() {
   git -C "$1" add -A && git -C "$1" commit -q --allow-empty -m "$2"
 }
 
-# check.sh を $1 のディレクトリで流し、出力を $out、終了コードを $rc に入れる
+# check.sh を $1 のディレクトリーで流し、出力を $out、終了コードを $rc に入れる
 run_check() {
   dir=$1
   shift
@@ -99,6 +99,12 @@ test_bash4_syntax_table() {
   pats+=('coproc cat') # bash-compat: ignore
   pats+=('echo {1..10..2}') # bash-compat: ignore
   pats+=('echo {01..03}') # bash-compat: ignore
+  pats+=('echo "$BASHPID"') # bash-compat: ignore
+  pats+=('echo "$SRANDOM"') # bash-compat: ignore
+  pats+=('read -e -i def v') # bash-compat: ignore
+  pats+=('wait -p id') # bash-compat: ignore
+  pats+=('wait -f') # bash-compat: ignore
+  pats+=('[ ! -v x ] && echo y') # bash-compat: ignore
   i=0
   while [ "$i" -lt "${#pats[@]}" ]; do
     begin "test_bash4_syntax_table[${pats[$i]}]"
@@ -239,7 +245,8 @@ test_odd_names() {
   expect_out 'my script.sh:'
   expect_out 'a,b.sh:'
   expect_out 'name.sh:'
-  expect_no_out 'gone.sh'
+  # 消したファイルは検査しない (消したことの警告だけが出る)
+  printf '%s\n' "$out" | grep -q '^gone.sh:[0-9]' && fail_because "消した gone.sh を検査した"
   expect_no_out 'link.sh'
   end
 }
@@ -420,6 +427,54 @@ test_marker_moved_into_head_warns() {
   end
 }
 
+# 差分のパスは glob として読まない (a*.sh の差分に ab.sh の行を混ぜない)
+test_literal_pathspec() {
+  begin test_literal_pathspec
+  new_repo
+  printf '#!/bin/bash\necho a\n' > "$r/a*.sh"
+  printf '#!/bin/bash\necho b\n' > "$r/ab.sh"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '#!/bin/bash\nx=1 # bash-compat: ignore\necho "$x"\n' > "$r/ab.sh"
+  printf '#!/bin/bash\necho a2\n' > "$r/a*.sh"
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_out 'ab.sh:2: warning'
+  expect_no_out 'a*.sh:'
+  end
+}
+
+# 検査の対象のファイルを消したら警告する (書き換えて拡張子も shebang も無い名前へ移すと、改名として拾えない)
+test_deleted_target_warns() {
+  begin test_deleted_target_warns
+  new_repo
+  printf '#!/bin/bash\necho one\necho two\necho three\n' > "$r/lib.sh"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  git -C "$r" rm -q lib.sh
+  printf 'x=1\ny=2\nz=3\nw=4\n' > "$r/lib"
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_rc 0
+  expect_out 'lib.sh: warning'
+  end
+}
+
+# 改名しただけのファイルでは、もとからある目印・ignore・ShellCheck の指示を「足した」と言わない
+test_rename_keeps_markers_quiet() {
+  begin test_rename_keeps_markers_quiet
+  new_repo
+  printf '#!/bin/bash\n# bash-compat: linux-only\n# shellcheck disable=SC2086\nx=1 # bash-compat: ignore\necho $x\n' > "$r/p.sh"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  git -C "$r" mv p.sh q.sh
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_rc 0
+  expect_no_out 'warning'
+  end
+}
+
 # 差分にあるのに作業ツリーに無いファイルは、黙って飛ばさず止める
 test_missing_worktree_file_fails() {
   begin test_missing_worktree_file_fails
@@ -523,6 +578,9 @@ test_gitattributes_cannot_hide_markers
 test_shellcheck_directive_variants_warn
 test_other_extension_shebang_added_warns
 test_marker_moved_into_head_warns
+test_literal_pathspec
+test_deleted_target_warns
+test_rename_keeps_markers_quiet
 test_missing_worktree_file_fails
 test_plusplus_lines
 test_binary_looking_file

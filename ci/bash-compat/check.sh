@@ -36,13 +36,13 @@ add_bash4 '\$\{[A-Za-z_][A-Za-z0-9_]*(\[[^]]*\])?@[A-Za-z]' '${var@X} の変換'
 add_bash4 '\$\{[A-Za-z_][A-Za-z0-9_]*:[^}:]*:[[:space:]]*-[0-9]' '${var:N:-M} の負の長さ' # bash-compat: ignore
 add_bash4 '\$\{[A-Za-z_][A-Za-z0-9_]*\[-[0-9]+\]' '${a[-1]} の負の添字' # bash-compat: ignore
 add_bash4 '(^|[^[:alnum:]_])(mapfile|readarray)([^[:alnum:]_]|$)' 'mapfile・readarray' # bash-compat: ignore
-add_bash4 '(^|[;&|[:space:]])read([[:space:]]+-[a-zA-Z]+)*[[:space:]]+-[a-zA-Z]*N' 'read -N' # bash-compat: ignore
+add_bash4 '(^|[;&|[:space:]])read([[:space:]]+-[a-zA-Z]+)*[[:space:]]+-[a-zA-Z]*[Ni]' 'read -N・read -i' # bash-compat: ignore
 add_bash4 '\{[A-Za-z_][A-Za-z0-9_]*\}[<>]' '{fd}> の名前付きの fd' # bash-compat: ignore
 add_bash4 '%\([^)]*\)T' "printf の %(…)T" # bash-compat: ignore
 add_bash4 'shopt[[:space:]]+-s[[:space:]].*(globstar|lastpipe|autocd|checkjobs|direxpand|dirspell|globasciiranges|inherit_errexit|localvar_inherit|assoc_expand_once)' 'shopt -s の bash 4 以降の項目' # bash-compat: ignore
-add_bash4 '(^|[;&|[:space:]])wait[[:space:]]+-[a-zA-Z]*n' 'wait -n' # bash-compat: ignore
-add_bash4 '(\[\[?|(^|[^[:alnum:]_])test)[[:space:]]+-v[[:space:]]' '-v の変数の存在の検査' # bash-compat: ignore
-add_bash4 '(^|[^[:alnum:]_])(EPOCHSECONDS|EPOCHREALTIME|BASH_ARGV0)([^[:alnum:]_]|$)' 'EPOCHSECONDS・EPOCHREALTIME・BASH_ARGV0' # bash-compat: ignore
+add_bash4 '(^|[;&|[:space:]])wait[[:space:]]+-[a-zA-Z]*[nfp]' 'wait -n・-f・-p' # bash-compat: ignore
+add_bash4 '(\[\[?|(^|[^[:alnum:]_])test)[[:space:]]+(![[:space:]]+)?-v[[:space:]]' '-v の変数の存在の検査' # bash-compat: ignore
+add_bash4 '(^|[^[:alnum:]_])(EPOCHSECONDS|EPOCHREALTIME|BASH_ARGV0|BASHPID|SRANDOM)([^[:alnum:]_]|$)' 'EPOCHSECONDS・EPOCHREALTIME・BASH_ARGV0・BASHPID・SRANDOM' # bash-compat: ignore
 add_bash4 '(^|[;&|[:space:]])coproc([[:space:]]|$)' 'coproc' # bash-compat: ignore
 add_bash4 '\{-?[0-9A-Za-z]+\.\.-?[0-9A-Za-z]+\.\.-?[0-9]+\}' '{1..10..2} の刻み付きの展開' # bash-compat: ignore
 add_bash4 '\{-?0[0-9]+\.\.-?[0-9]+\}' '{01..03} の 0 埋めの展開' # bash-compat: ignore
@@ -110,6 +110,12 @@ notice() {
   fi
 }
 
+# 1 行目が sh・bash の shebang か (zsh は外す)
+has_shell_shebang() {
+  case "$1" in '#!'*zsh*) return 1 ;; esac
+  printf '%s\n' "$1" | grep -aEq "$SHEBANG_RE"
+}
+
 # パスと 1 行目から、検査の対象かを決める。zsh の shebang は拡張子が .sh でも外す
 is_target_by() {
   case "$2" in '#!'*zsh*) return 1 ;; esac
@@ -119,7 +125,7 @@ is_target_by() {
   name=${1##*/}
   name=${name#"${name%%[!.]*}"}
   case "$name" in *.*) return 1 ;; esac
-  printf '%s\n' "$2" | grep -aEq "$SHEBANG_RE"
+  has_shell_shebang "$2"
 }
 
 # 標準入力の先頭 10 行に Linux 専用の目印があるか
@@ -210,16 +216,20 @@ if [ "$mode" = diff ]; then
     esac
   done < "$tmp/all-changed"
 
-  # base では対象だったのに、head では対象でなくなったファイル (.zsh への改名・zsh の shebang など)
-  git diff -z --name-status --no-ext-diff --diff-filter=MRT -M "$merge_base" "$head" > "$tmp/status" || die "git diff が失敗した"
+  # base では対象だったのに、head では対象でなくなったファイル (.zsh への改名・zsh の shebang など) と、消した対象のファイル。
+  # 書き換えて拡張子も shebang も無い名前へ移すと改名として拾えず D と A になるので、消したことも知らせる
+  git diff -z --name-status --no-ext-diff --diff-filter=MRTD -M "$merge_base" "$head" > "$tmp/status" || die "git diff が失敗した"
+  : > "$tmp/renames"
   while IFS= read -r -d '' st; do
     IFS= read -r -d '' old || break
     new=$old
-    case "$st" in R*) IFS= read -r -d '' new || break ;; esac
+    case "$st" in R*) IFS= read -r -d '' new || break ; printf '%s\0%s\0' "$new" "$old" >> "$tmp/renames" ;; esac
     old_first=$(git show "$merge_base:$old" 2>/dev/null | sed -n '1p')
-    if is_target_by "$old" "$old_first" && ! is_target "$new"; then
-      warn "$old" '' "検査の対象から外れた ($new)。結果を信用せず差分を見ること"
-    fi
+    is_target_by "$old" "$old_first" || continue
+    case "$st" in
+      D) warn "$old" '' "検査の対象のファイルを消した。対象の外へ移していないか差分を見ること" ;;
+      *) is_target "$new" || warn "$old" '' "検査の対象から外れた ($new)。結果を信用せず差分を見ること" ;;
+    esac
   done < "$tmp/status"
 
   # bash の shebang があるのに、拡張子で検査の対象の外になるファイルを足した (.command への改名・書き換えを含む)
@@ -229,21 +239,26 @@ if [ "$mode" = diff ]; then
     case "$st" in R* | C*) IFS= read -r -d '' new || break ;; esac
     [ -f "$new" ] && [ ! -L "$new" ] || continue
     is_target "$new" && continue
-    first=$(first_line_of "$new")
-    case "$first" in '#!'*zsh*) continue ;; esac
-    if printf '%s\n' "$first" | grep -aEq "$SHEBANG_RE"; then
+    if has_shell_shebang "$(first_line_of "$new")"; then
       warn "$new" '' "bash の shebang があるが、拡張子で検査の対象の外になる。結果を信用せず差分を見ること"
     fi
   done < "$tmp/added"
 
   while IFS= read -r -d '' f; do
+    # 改名したファイルは旧い名前と比べる (もとからある目印や指示を「足した」と言わない)
+    old=$f
+    while IFS= read -r -d '' rn && IFS= read -r -d '' ro; do
+      [ "$rn" = "$f" ] && old=$ro
+    done < "$tmp/renames"
+
     # Linux 専用の目印は、行を足さずに (上の行を消して) 先頭 10 行に入れても効くので、状態で比べる
-    if has_linux_marker < "$f" && ! git show "$merge_base:$f" 2>/dev/null | has_linux_marker; then
+    if has_linux_marker < "$f" && ! git show "$merge_base:$old" 2>/dev/null | has_linux_marker; then
       warn "$f" '' "Linux 専用の目印が効くようになった (bash 3.2 の検査が外れる)。結果を信用せず差分を見ること"
     fi
 
-    # 足した行の ignore の目印と ShellCheck の指示。.gitattributes の -diff でも行が見えるよう -a で取る
-    git diff -U0 -a --no-textconv --no-color --no-ext-diff "$merge_base" "$head" -- "$f" > "$tmp/hunks" || die "git diff が失敗した"
+    # 足した行の ignore の目印と ShellCheck の指示。.gitattributes の -diff でも行が見えるよう -a で取る。
+    # パスは glob として読ませない (a*.sh の差分に ab.sh の行が混ざる)
+    git --literal-pathspecs diff -U0 -a -M --no-textconv --no-color --no-ext-diff "$merge_base" "$head" -- "$old" "$f" > "$tmp/hunks" || die "git diff が失敗した"
     line=0
     in_hunk=false
     while IFS= read -r l; do
