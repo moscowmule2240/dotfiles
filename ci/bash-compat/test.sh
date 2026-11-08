@@ -100,6 +100,10 @@ test_bash4_syntax_table() {
   pats+=('echo {1..10..2}') # bash-compat: ignore
   pats+=('echo {01..03}') # bash-compat: ignore
   pats+=('echo "$BASHPID"') # bash-compat: ignore
+  pats+=('echo "${1,,}"') # bash-compat: ignore
+  pats+=('echo "${@^^}"') # bash-compat: ignore
+  pats+=('echo "${1@Q}"') # bash-compat: ignore
+  pats+=('echo "${1:0:-1}"') # bash-compat: ignore
   pats+=('echo "$SRANDOM"') # bash-compat: ignore
   pats+=('read -e -i def v') # bash-compat: ignore
   pats+=('wait -p id') # bash-compat: ignore
