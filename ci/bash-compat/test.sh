@@ -10,10 +10,13 @@ here=$(cd "$(dirname "$0")" && pwd)
 check="$here/check.sh"
 repo_root=$(git -C "$here" rev-parse --show-toplevel) || exit 1
 
-if [ -z "${BASH32:-}" ] && /bin/bash -c '[ "${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}" = 3.2 ]' 2>/dev/null; then
+# BASH32 が未設定のときだけ、/bin/bash が 3.2 ならそれを使う。空を渡すと Docker の経路を通る (Mac でも確かめられる)
+if [ -z "${BASH32+set}" ] && /bin/bash -c '[ "${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}" = 3.2 ]' 2>/dev/null; then
   BASH32=/bin/bash
 fi
 export BASH32="${BASH32:-}"
+# CI の step には GITHUB_ACTIONS=true が入る。注釈の形を確かめるテストだけが明示して渡す
+unset GITHUB_ACTIONS
 
 mkdir -p "$repo_root/.temp/bash-compat-test" || exit 1
 work=$(mktemp -d "$repo_root/.temp/bash-compat-test/run.XXXXXX") || exit 1
@@ -372,7 +375,13 @@ test_bash32_stderr_noise_ok() {
   new_repo
   printf '#!/bin/bash\necho ok\n' > "$r/ok.sh"
   commit "$r" init
-  printf '#!/bin/sh\necho "Pulling from library/bash" >&2\nexec "%s" "$@"\n' "$BASH32" > "$work/noisy-bash"
+  if [ -n "$BASH32" ]; then
+    printf '#!/bin/sh\necho "Pulling from library/bash" >&2\nexec "%s" "$@"\n' "$BASH32" > "$work/noisy-bash"
+  else
+    # Docker の経路では、check.sh と同じイメージの bash を前に雑音を出してから起動する
+    image=$(sed -n "s/^IMAGE='\(.*\)'$/\1/p" "$check")
+    printf '#!/bin/sh\necho "Pulling from library/bash" >&2\nexec docker run --rm -v "$PWD:/w:ro" -w /w "%s" bash "$@"\n' "$image" > "$work/noisy-bash"
+  fi
   chmod +x "$work/noisy-bash"
   out=$(cd "$r" && BASH32="$work/noisy-bash" bash "$check" --all 2>&1)
   rc=$?
