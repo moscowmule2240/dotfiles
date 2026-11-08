@@ -10,14 +10,17 @@
 #   SHELLCHECK     shellcheck の実行ファイル。空なら PATH の shellcheck
 #   GITHUB_ACTIONS true なら GitHub Actions の注釈の形で出す
 # 目印:
-#   先頭 10 行の中の「# bash-compat: linux-only」  Linux の上でだけ動く。bash 3.2 の検査と grep を飛ばす
+#   先頭 10 行の行頭の「# bash-compat: linux-only」  Linux の上でだけ動く。bash 3.2 の検査と grep を飛ばす
 #   行末の「# bash-compat: ignore」                その行だけ bash 4 以降の構文の grep を飛ばす
 # exit: 0 = 指摘なし、1 = 指摘あり、2 = 検査できない
 # bash 3.2 で動かすため、連想配列・mapfile は使わない。
 set -u
 
 IMAGE='bash:3.2.57@sha256:44900632c47e54937a3c2d7de2b4d05af7aee6d269c71c3116204842ee26101c'
-MARK_LINUX_ONLY='# bash-compat: linux-only'
+# 目印は行頭のコメントだけに効く (ヒアドキュメントの中の行などで効かせない)
+MARK_LINUX_RE='^[[:space:]]*# bash-compat: linux-only'
+# 足した行のうち、検査を外す書き方。ShellCheck の指示は書き方によらず全部 (disable 以外の shell= なども効き方を変える)
+WEAKEN_LINE_RE='#[[:space:]]*shellcheck[[:space:]]|# bash-compat: ignore'
 # 拡張子の無いスクリプトを shebang で拾う。env -S の形も拾う (外して黙って検査から逃げられないように)
 SHEBANG_RE='^#![[:space:]]*(/usr/bin/env[[:space:]]+(-S[[:space:]]+)?)?(/[^[:space:]]*/)?(ba)?sh([[:space:]]|$)'
 
@@ -116,7 +119,12 @@ is_target_by() {
   name=${1##*/}
   name=${name#"${name%%[!.]*}"}
   case "$name" in *.*) return 1 ;; esac
-  printf '%s\n' "$2" | grep -Eq "$SHEBANG_RE"
+  printf '%s\n' "$2" | grep -aEq "$SHEBANG_RE"
+}
+
+# 標準入力の先頭 10 行に Linux 専用の目印があるか
+has_linux_marker() {
+  sed -n '1,10p' | grep -aEq -- "$MARK_LINUX_RE"
 }
 
 first_line_of() {
@@ -183,6 +191,8 @@ fi
 
 : > "$tmp/targets"
 while IFS= read -r -d '' f; do
+  # 一覧にあるのに作業ツリーに無いファイルは、黙って飛ばさずに止める (CI で別の checkout に消された場合など)
+  [ -e "$f" ] || [ -L "$f" ] || die "一覧にある $f が作業ツリーに無い"
   if is_target "$f"; then
     printf '%s\0' "$f" >> "$tmp/targets"
   fi
@@ -194,7 +204,7 @@ if [ "$mode" = diff ]; then
   git diff -z --name-only --no-ext-diff --no-renames "$merge_base" "$head" > "$tmp/all-changed" || die "git diff が失敗した"
   while IFS= read -r -d '' f; do
     case "$f" in
-      .github/workflows/* | ci/bash-compat/* | .shellcheckrc | shellcheckrc | */.shellcheckrc | */shellcheckrc)
+      .github/workflows/* | ci/bash-compat/* | .bash-compat/* | .shellcheckrc | shellcheckrc | */.shellcheckrc | */shellcheckrc | .gitattributes | */.gitattributes)
         warn "$f" '' "CI の設定が変わった。結果を信用せず差分を見ること"
         ;;
     esac
@@ -212,22 +222,42 @@ if [ "$mode" = diff ]; then
     fi
   done < "$tmp/status"
 
-  # 足した行の目印と shellcheck の disable
+  # bash の shebang があるのに、拡張子で検査の対象の外になるファイルを足した (.command への改名・書き換えを含む)
+  git diff -z --name-status --no-ext-diff --diff-filter=ACR -M "$merge_base" "$head" > "$tmp/added" || die "git diff が失敗した"
+  while IFS= read -r -d '' st; do
+    IFS= read -r -d '' new || break
+    case "$st" in R* | C*) IFS= read -r -d '' new || break ;; esac
+    [ -f "$new" ] && [ ! -L "$new" ] || continue
+    is_target "$new" && continue
+    first=$(first_line_of "$new")
+    case "$first" in '#!'*zsh*) continue ;; esac
+    if printf '%s\n' "$first" | grep -aEq "$SHEBANG_RE"; then
+      warn "$new" '' "bash の shebang があるが、拡張子で検査の対象の外になる。結果を信用せず差分を見ること"
+    fi
+  done < "$tmp/added"
+
   while IFS= read -r -d '' f; do
-    git diff -U0 --no-color --no-ext-diff "$merge_base" "$head" -- "$f" > "$tmp/hunks" || die "git diff が失敗した"
+    # Linux 専用の目印は、行を足さずに (上の行を消して) 先頭 10 行に入れても効くので、状態で比べる
+    if has_linux_marker < "$f" && ! git show "$merge_base:$f" 2>/dev/null | has_linux_marker; then
+      warn "$f" '' "Linux 専用の目印が効くようになった (bash 3.2 の検査が外れる)。結果を信用せず差分を見ること"
+    fi
+
+    # 足した行の ignore の目印と ShellCheck の指示。.gitattributes の -diff でも行が見えるよう -a で取る
+    git diff -U0 -a --no-textconv --no-color --no-ext-diff "$merge_base" "$head" -- "$f" > "$tmp/hunks" || die "git diff が失敗した"
     line=0
+    in_hunk=false
     while IFS= read -r l; do
       case "$l" in
         '@@ '*)
           line=$(printf '%s\n' "$l" | sed -n 's/^@@ -[0-9,]* +\([0-9]*\).*/\1/p')
+          in_hunk=true
           ;;
-        '+++'*) ;;
         '+'*)
-          case "$l" in
-            *'bash-compat: linux-only'* | *'bash-compat: ignore'* | *'shellcheck disable'*)
-              warn "$f" "$line" "検査を外す目印を足した。結果を信用せず差分を見ること"
-              ;;
-          esac
+          # 最初の @@ より前は見出し (+++ b/...)。hunk の中の ++ で始まる行は足した行として読む
+          $in_hunk || continue
+          if [[ $l =~ $WEAKEN_LINE_RE ]]; then
+            warn "$f" "$line" "検査を外す目印か ShellCheck の指示を足した。結果を信用せず差分を見ること"
+          fi
           line=$((line + 1))
           ;;
       esac
@@ -243,14 +273,15 @@ fi
 # ---- bash 3.2 の bash -n と bash 4 以降の構文の grep (Linux 専用の目印のあるファイルは飛ばす)
 : > "$tmp/bash32-targets"
 while IFS= read -r -d '' f; do
-  if sed -n '1,10p' < "$f" | grep -qF -- "$MARK_LINUX_ONLY"; then
+  if has_linux_marker < "$f"; then
     continue
   fi
   printf '%s\0' "$f" >> "$tmp/bash32-targets"
 
   i=0
   while [ "$i" -lt "${#BASH4_RE[@]}" ]; do
-    grep -nE -- "${BASH4_RE[$i]}" < "$f" | grep -Ev '^[0-9]+:[[:space:]]*#|# bash-compat: ignore[[:space:]]*$' > "$tmp/hits"
+    # NUL などで binary に見えるファイルでも行を読む (-a)
+    grep -anE -- "${BASH4_RE[$i]}" < "$f" | grep -aEv '^[0-9]+:[[:space:]]*#|# bash-compat: ignore[[:space:]]*$' > "$tmp/hits"
     while IFS= read -r hit; do
       report "$f" "${hit%%:*}" bash4-syntax "${BASH4_LABEL[$i]} (bash 3.2 では動かない)"
     done < "$tmp/hits"

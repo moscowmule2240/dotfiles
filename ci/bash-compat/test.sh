@@ -355,6 +355,115 @@ test_bash32_not_32_fails() {
   end
 }
 
+# .gitattributes の -diff で差分を binary にしても、足した目印と ignore を警告する
+test_gitattributes_cannot_hide_markers() {
+  begin test_gitattributes_cannot_hide_markers
+  new_repo
+  printf '#!/bin/bash\necho k\n' > "$r/k.sh"
+  printf '#!/bin/bash\necho j\n' > "$r/j.sh"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '*.sh -diff\n' > "$r/.gitattributes"
+  printf '#!/bin/bash\n# bash-compat: linux-only\nmapfile -t a < /dev/null\necho "${a[@]}"\n' > "$r/k.sh" # bash-compat: ignore
+  printf '#!/bin/bash\nx=1 # bash-compat: ignore\necho "$x"\n' > "$r/j.sh"
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_rc 0
+  expect_out '.gitattributes: warning'
+  expect_out 'k.sh: warning'
+  expect_out 'j.sh:2: warning'
+  end
+}
+
+# ShellCheck の指示は書き方 (空白の数・ほかのキーとの組み合わせ・shell=) によらず警告する
+test_shellcheck_directive_variants_warn() {
+  begin test_shellcheck_directive_variants_warn
+  new_repo
+  printf '#!/bin/bash\necho s\n' > "$r/s.sh"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '#!/bin/bash\n#  shellcheck  disable=SC2164\n# shellcheck source=/dev/null disable=SC2164\n# shellcheck shell=sh\necho s\n' > "$r/s.sh"
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  n=$(printf '%s\n' "$out" | grep -c '^s.sh:[0-9]*: warning')
+  [ "$n" = 3 ] || fail_because "s.sh の警告が $n (期待は 3)"
+  end
+}
+
+# bash の shebang があるのに拡張子で対象の外になるファイルを足したら警告する (.command への改名・書き換えも同じ)
+test_other_extension_shebang_added_warns() {
+  begin test_other_extension_shebang_added_warns
+  new_repo
+  printf 'x\n' > "$r/README"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '#!/bin/bash\ndeclare -A m\n' > "$r/run.command" # bash-compat: ignore
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_rc 0
+  expect_out 'run.command: warning'
+  end
+}
+
+# 足した行を使わず、上の行を消して目印を先頭 10 行に入れたときも警告する
+test_marker_moved_into_head_warns() {
+  begin test_marker_moved_into_head_warns
+  new_repo
+  printf '#!/bin/bash\n:\n:\n:\n:\n:\n:\n:\n:\n:\n:\n# bash-compat: linux-only\necho m\n' > "$r/m.sh"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '#!/bin/bash\n:\n:\n:\n:\n:\n:\n:\n:\n# bash-compat: linux-only\nmapfile -t a < /dev/null\necho "${a[@]}"\n' > "$r/m.sh" # bash-compat: ignore
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_rc 0
+  expect_out 'm.sh: warning'
+  end
+}
+
+# 差分にあるのに作業ツリーに無いファイルは、黙って飛ばさず止める
+test_missing_worktree_file_fails() {
+  begin test_missing_worktree_file_fails
+  new_repo
+  printf 'x\n' > "$r/README"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '#!/bin/bash\ndeclare -A m\n' > "$r/a.sh" # bash-compat: ignore
+  commit "$r" head
+  rm "$r/a.sh"
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_rc 2
+  expect_out '作業ツリーに無い'
+  end
+}
+
+# 目印は行頭のコメントだけに効く。++ で始まる足した行も、差分の見出しと取り違えずに警告する
+test_plusplus_lines() {
+  begin test_plusplus_lines
+  new_repo
+  printf '#!/bin/bash\necho h\n' > "$r/h.sh"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '#!/bin/bash\n: <<"X"\n++ # bash-compat: linux-only\n++ y=1 # bash-compat: ignore\nX\ndeclare -A m\n' > "$r/h.sh" # bash-compat: ignore
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_rc 1
+  expect_out 'h.sh:6: bash4-syntax'
+  expect_out 'h.sh:4: warning'
+  end
+}
+
+# NUL を含むなど binary に見えるファイルでも、bash 4 以降の構文を拾う
+test_binary_looking_file() {
+  begin test_binary_looking_file
+  new_repo
+  printf '#!/bin/bash\n# \000\ndeclare -A m\n' > "$r/f.sh" # bash-compat: ignore
+  commit "$r" init
+  run_check "$r" --all
+  expect_rc 1
+  expect_out 'f.sh:3: bash4-syntax'
+  end
+}
+
 # source で読む隣のファイルが使う変数を、未使用 (SC2034) と言わない。source= の指示はスクリプトの場所から辿る
 test_shellcheck_follows_source() {
   begin test_shellcheck_follows_source
@@ -410,6 +519,13 @@ test_missing_base_checks_all
 test_head_missing_fails
 test_head_not_checked_out_fails
 test_weakening_changes_warn
+test_gitattributes_cannot_hide_markers
+test_shellcheck_directive_variants_warn
+test_other_extension_shebang_added_warns
+test_marker_moved_into_head_warns
+test_missing_worktree_file_fails
+test_plusplus_lines
+test_binary_looking_file
 test_github_annotations
 test_bash32_unavailable_fails
 test_bash32_not_32_fails
