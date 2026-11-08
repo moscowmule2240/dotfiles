@@ -479,6 +479,22 @@ test_rename_keeps_markers_quiet() {
   end
 }
 
+# 既定値の ${2:-${PORT:-22}} は、負の長さの ${var:N:-M} と取り違えない。空の offset の ${x::-1} は拾う
+test_default_value_not_negative_length() {
+  begin test_default_value_not_negative_length
+  new_repo
+  printf '#!/bin/bash\np="${2:-${PORT:-22}}"\necho "$p"\n' > "$r/d.sh"
+  commit "$r" init
+  run_check "$r" --all
+  expect_rc 0
+  printf 'x=abc\necho "${x::-1}"\n' >> "$r/d.sh" # bash-compat: ignore
+  commit "$r" second
+  run_check "$r" --all
+  expect_rc 1
+  expect_out 'd.sh:5: bash4-syntax'
+  end
+}
+
 # 対象外だったファイルを対象にしたら、もとからある目印と指示も足したものとして警告する (改名・shebang の追加)
 test_untarget_to_target_warns() {
   begin test_untarget_to_target_warns
@@ -653,6 +669,7 @@ test_marker_moved_into_head_warns
 test_literal_pathspec
 test_deleted_target_warns
 test_rename_keeps_markers_quiet
+test_default_value_not_negative_length
 test_untarget_to_target_warns
 test_shebang_switched_to_bash_warns
 test_env_shebang_variants

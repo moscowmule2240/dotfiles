@@ -24,6 +24,7 @@ WEAKEN_LINE_RE='#[[:space:]]*shellcheck[[:space:]]|# bash-compat: ignore'
 
 # bash 3.2 の bash -n は通るが、3.2 で実行すると壊れる・結果が変わる構文。正規表現と説明を並べる。
 # 変数名の位置には、位置パラメーター (${1,,}) と $@・$* も入る
+# ${var:N:-M} の N は - で始まらない (${var:-既定値} と取り違えないため。空の ${var::-M} は拾う)
 # case の ;& や |&、&>> は bash 3.2 の bash -n が構文エラーにするのでここには入れない
 BASH4_RE=()
 BASH4_LABEL=()
@@ -32,7 +33,7 @@ add_bash4 '(^|[;&|[:space:](])(declare|local|typeset)[[:space:]]+-[a-zA-Z]*[Agln
 add_bash4 '(^|[;&|[:space:]])local[[:space:]]+-([[:space:];]|$)' 'local -' # bash-compat: ignore
 add_bash4 '\$\{([A-Za-z_][A-Za-z0-9_]*|[0-9]+|[@*])(\[[^]]*\])?(\^|,)' '${var,,}・${var^^} の大文字・小文字の変換' # bash-compat: ignore
 add_bash4 '\$\{([A-Za-z_][A-Za-z0-9_]*|[0-9]+|[@*])(\[[^]]*\])?@[A-Za-z]' '${var@X} の変換' # bash-compat: ignore
-add_bash4 '\$\{([A-Za-z_][A-Za-z0-9_]*|[0-9]+|[@*]):[^}:]*:[[:space:]]*-[0-9]' '${var:N:-M} の負の長さ' # bash-compat: ignore
+add_bash4 '\$\{([A-Za-z_][A-Za-z0-9_]*|[0-9]+|[@*]):([^-}:][^}:]*)?:[[:space:]]*-[0-9]' '${var:N:-M} の負の長さ' # bash-compat: ignore
 add_bash4 '\$\{[A-Za-z_][A-Za-z0-9_]*\[-[0-9]+\]' '${a[-1]} の負の添字' # bash-compat: ignore
 add_bash4 '(^|[^[:alnum:]_])(mapfile|readarray)([^[:alnum:]_]|$)' 'mapfile・readarray' # bash-compat: ignore
 add_bash4 '(^|[;&|[:space:]])read([[:space:]]+-[a-zA-Z]+)*[[:space:]]+-[a-zA-Z]*[Ni]' 'read -N・read -i' # bash-compat: ignore
