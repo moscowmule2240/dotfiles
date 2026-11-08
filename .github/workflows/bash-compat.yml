@@ -1,0 +1,74 @@
+# 変わった bash のスクリプトを bash 3.2 と ShellCheck で検査する (ci/bash-compat/check.sh)。
+# ほかのリポジトリからも workflow_call で呼ばれる。required check にはしない (結果はレビューで見る)。
+# pull_request_target は使わない。権限は contents: read だけで、secrets を使わない。
+name: bash-compat
+
+on:
+  workflow_call:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # 待っている run は新しい run に置き換わり、push ごとの差分が検査されないまま残るので、
+    # 取り消しは pull_request のときだけにする (push は run ごとに別の group)
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && format('bash-compat-{0}-{1}', github.repository, github.ref) || format('bash-compat-run-{0}', github.run_id) }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    steps:
+      # pull_request の既定のマージ commit ではなく、PR の head を読む (差分の行番号と中身を head に合わせる)
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      # 検査の本体。呼び出し元が dotfiles なら同じ commit、それ以外は main を使う。
+      # .bash-compat は呼び出し元で追跡されないので、検査の対象に入らない
+      - name: checkout check script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: moscowmule2240/dotfiles
+          ref: ${{ github.repository == 'moscowmule2240/dotfiles' && (github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha) || 'main' }}
+          path: .bash-compat
+          persist-credentials: false
+
+      # 手元 (mise) と版をそろえる。ubuntu の apt の版は古い
+      - name: install shellcheck
+        run: |
+          set -euo pipefail
+          url=https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz
+          sum=8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+          curl -fsSL -o "$RUNNER_TEMP/shellcheck.tar.xz" "$url"
+          echo "$sum  $RUNNER_TEMP/shellcheck.tar.xz" | sha256sum -c -
+          tar -xJf "$RUNNER_TEMP/shellcheck.tar.xz" -C "$RUNNER_TEMP"
+          echo "SHELLCHECK=$RUNNER_TEMP/shellcheck-v0.11.0/shellcheck" >> "$GITHUB_ENV"
+
+      # 検査の本体を変えたときに壊していないか。ランナーの /bin/bash は 5 なので Docker の経路を通る
+      - name: test check script
+        if: github.repository == 'moscowmule2240/dotfiles'
+        run: bash .bash-compat/ci/bash-compat/test.sh
+
+      - name: check
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            base=$PR_BASE
+            head=$PR_HEAD
+          else
+            base=$PUSH_BEFORE
+            head=$SHA
+          fi
+          bash .bash-compat/ci/bash-compat/check.sh "$base" "$head"
