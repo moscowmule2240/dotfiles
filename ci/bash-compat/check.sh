@@ -111,6 +111,11 @@ notice() {
 is_target_by() {
   case "$2" in '#!'*zsh*) return 1 ;; esac
   case "$1" in *.sh | *.bash) return 0 ;; esac
+  # shebang で拾うのは拡張子の無いファイルだけ。sh で起動して python へ渡す .py の polyglot などを外す
+  # (.sh からほかの拡張子への改名は「検査の対象から外れた」の警告で拾う)
+  name=${1##*/}
+  name=${name#"${name%%[!.]*}"}
+  case "$name" in *.*) return 1 ;; esac
   printf '%s\n' "$2" | grep -Eq "$SHEBANG_RE"
 }
 

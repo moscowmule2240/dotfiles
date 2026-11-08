@@ -145,6 +145,18 @@ test_extensionless_shebang() {
   end
 }
 
+# sh で起動して python へ渡す polyglot など、ほかの言語の拡張子のファイルは shebang が sh でも対象にしない
+test_other_extension_skipped() {
+  begin test_other_extension_skipped
+  new_repo
+  printf '#!/bin/sh\n""":" ; exec python3 "$0" "$@"\nprint("hi")\n"""\n' > "$r/tool.py"
+  commit "$r" init
+  run_check "$r" --all
+  expect_rc 0
+  expect_out '対象なし'
+  end
+}
+
 test_zsh_skipped() {
   begin test_zsh_skipped
   new_repo
@@ -385,6 +397,7 @@ test_clean_passes
 test_bash4_syntax_table
 test_bash32_parse_fails
 test_extensionless_shebang
+test_other_extension_skipped
 test_zsh_skipped
 test_comments_and_ignore
 test_linux_only_marker
