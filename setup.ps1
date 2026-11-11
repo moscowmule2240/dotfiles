@@ -87,49 +87,118 @@ New-Item -ItemType SymbolicLink -Path $sshConfigTarget -Target $sshConfigSource 
 # dotmine
 & "$PSScriptRoot\dotmine\setup.ps1"
 
-# ssh config
-# Inject SSH config auto-generation into PowerShell profile
+# PowerShell のプロファイル (実体は files/powershell/profile.ps1。SSH の関数・mise activate・update-tools の alias)
+# $PROFILE にはその dot-source の 1 行だけを書く (中身を書き込むと、後から直しても既に setup したマシンに反映されないため)。
+# 以前の setup.ps1 が $PROFILE に書き込んだもの (SSH の関数・mise activate・update-tools の alias) は profile.ps1 へ移したので取り除く。
+# 消すのは以前の setup.ps1 が書いた形の行だけで、消した行は表示する。SSH の関数は、書き込んだときと同じ並び
+# (行末の空白は見ない) のときだけ取り除き、手で直してあれば残して知らせる。
+# dot-source の行は、既にあれば位置を動かさない。無ければ以前の mise activate の位置 (無ければ最初に取り除いた行の位置) に
+# 差し込み、何も取り除かなければ末尾に足す。mise activate の前後の行は、mise の PATH や prompt の上書きの前後関係を当てにして
+# いるので、その位置を保つ。以前の SSH の関数は mise activate より前に書いていたので、手で直して残した関数より dot-source の方が
+# 後になり、profile.ps1 の定義が勝つ。
+# リポジトリの置き場が変わったときに古いパスの行が残らないよう、古い dot-source の行はその位置で差し替える。
+# パスの ' は '' に二重化する (そのままだと $PROFILE 全体が構文エラーになる)。
+# 読み出しに失敗したら止める (空として扱うと、$PROFILE 全体を上書きしてしまう)。
 $profilePath = $PROFILE
 if (-not (Test-Path $profilePath)) {
-    if (-not (Test-Path (Split-Path $profilePath))) {
-        New-Item -ItemType Directory -Path (Split-Path $profilePath) -Force | Out-Null
-    }
     New-Item -ItemType File -Path $profilePath -Force | Out-Null
 }
+$profileSource = ". '$($PSScriptRoot.Replace("'", "''"))\files\powershell\profile.ps1'"
+$legacySshFunctions = @(
+    '# SSH Config Auto-generation'
+    'function Update-SshConfig {'
+    '    $sshHome = "$env:USERPROFILE\.ssh"'
+    '    $confDir = Join-Path $sshHome "conf.d"'
+    '    $targetConfig = Join-Path $sshHome "config"'
+    ''
+    '    if (Test-Path $confDir) {'
+    '        # Get content from files only'
+    '        $content = Get-ChildItem (Join-Path $confDir "*") -File | Get-Content'
+    '        $filtered = $content | Where-Object { $_ -notmatch "^\s*(ControlPath|ControlMaster|ControlPersist)" }'
+    '        $filtered | Set-Content $targetConfig'
+    '    }'
+    '}'
+    ''
+    'function ssh {'
+    '    Update-SshConfig'
+    '    ssh.exe @args'
+    '}'
+    ''
+    'function scp {'
+    '    Update-SshConfig'
+    '    scp.exe @args'
+    '}'
+)
+$currentLines = @(Get-Content $profilePath -ErrorAction Stop)
 
-$sshConfigFunctions = @'
+# 以前の SSH の関数を探す (書き込んだときは直前に空行を 1 行足していたので、あればそれも取り除く)
+$legacyStart = -1
+$legacyEnd = -1
+for ($i = 0; $i -le $currentLines.Count - $legacySshFunctions.Count; $i++) {
+    $same = $true
+    for ($j = 0; $j -lt $legacySshFunctions.Count; $j++) {
+        if ($currentLines[$i + $j].TrimEnd() -cne $legacySshFunctions[$j]) { $same = $false; break }
+    }
+    if ($same) { $legacyStart = $i; $legacyEnd = $i + $legacySshFunctions.Count; break }
+}
+if ($legacyStart -gt 0 -and $currentLines[$legacyStart - 1].Trim() -eq '') { $legacyStart-- }
+if ($legacyStart -lt 0 -and $currentLines -match '^\s*function Update-SshConfig\b') {
+    Write-Host "Left the hand-edited SSH functions in $profilePath (the ones in files\powershell\profile.ps1 override them)"
+}
 
-# SSH Config Auto-generation
-function Update-SshConfig {
-    $sshHome = "$env:USERPROFILE\.ssh"
-    $confDir = Join-Path $sshHome "conf.d"
-    $targetConfig = Join-Path $sshHome "config"
-    
-    if (Test-Path $confDir) {
-        # Get content from files only
-        $content = Get-ChildItem (Join-Path $confDir "*") -File | Get-Content
-        $filtered = $content | Where-Object { $_ -notmatch "^\s*(ControlPath|ControlMaster|ControlPersist)" }
-        $filtered | Set-Content $targetConfig
+# 以前の setup.ps1 が書いた行を取り除き、dot-source の行を置く位置を決める
+# (mise activate は直前に空行を 1 行足して書いていたので、あればそれも取り除く)
+$legacyMise = '(&mise activate pwsh) | Out-String | Invoke-Expression'
+$legacyAlias = "^Set-Alias -Name update-tools -Value '.*[\\/]files[\\/]powershell[\\/]update-tools\.ps1'$"
+$oldSource = "^\. '.*[\\/]files[\\/]powershell[\\/]profile\.ps1'$"
+$keptLines = [System.Collections.Generic.List[string]]::new()
+$insertAt = -1
+$miseAt = -1
+$hasSource = $false
+for ($i = 0; $i -lt $currentLines.Count; $i++) {
+    $line = $currentLines[$i]
+    if ($i -ge $legacyStart -and $i -lt $legacyEnd) {
+        if ($i -eq $legacyStart) { Write-Host "Removed the SSH functions written by an earlier setup.ps1 from $profilePath" }
+        if ($insertAt -lt 0) { $insertAt = $keptLines.Count }
+        continue
+    }
+    if ($line -ceq $profileSource) {
+        if (-not $hasSource) { $keptLines.Add($line) }
+        $hasSource = $true
+        continue
+    }
+    # mise activate は字下げせずに書いていたので、字下げした行 (手で if の中などに書いたもの) は対象にしない
+    $isLegacyMise = $line.TrimEnd() -ceq $legacyMise
+    if ($isLegacyMise -or $line -match $legacyAlias -or $line -match $oldSource) {
+        Write-Host "Removed from ${profilePath}: $line"
+        if ($isLegacyMise) {
+            if ($keptLines.Count -gt 0 -and $keptLines[$keptLines.Count - 1].Trim() -eq '') { $keptLines.RemoveAt($keptLines.Count - 1) }
+            if ($miseAt -lt 0) { $miseAt = $keptLines.Count }
+        }
+        # 空行を取り除いたぶん、先に決めた位置が行数を超えることがあるので詰める
+        if ($miseAt -gt $keptLines.Count) { $miseAt = $keptLines.Count }
+        if ($insertAt -lt 0 -or $insertAt -gt $keptLines.Count) { $insertAt = $keptLines.Count }
+        continue
+    }
+    $keptLines.Add($line)
+}
+if (-not $hasSource) {
+    if ($miseAt -ge 0) {
+        $keptLines.Insert($miseAt, $profileSource)
+    } elseif ($insertAt -ge 0) {
+        $keptLines.Insert($insertAt, $profileSource)
+    } else {
+        while ($keptLines.Count -gt 0 -and $keptLines[$keptLines.Count - 1].Trim() -eq '') { $keptLines.RemoveAt($keptLines.Count - 1) }
+        $keptLines.Add($profileSource)
     }
 }
+$profileLines = @($keptLines)
 
-function ssh {
-    Update-SshConfig
-    ssh.exe @args
-}
-
-function scp {
-    Update-SshConfig
-    scp.exe @args
-}
-'@
-
-$currentProfileContent = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
-if ($null -eq $currentProfileContent -or $currentProfileContent -notmatch "function Update-SshConfig") {
-    Add-Content -Path $profilePath -Value $sshConfigFunctions
-    Write-Host "Added SSH config automation to $profilePath"
+if (($profileLines -join "`n") -cne ($currentLines -join "`n")) {
+    Set-Content -Path $profilePath -Value $profileLines
+    Write-Host "Set $profileSource in $profilePath"
 } else {
-    Write-Host "SSH config automation already exists in $profilePath"
+    Write-Host "$profilePath already loads files\powershell\profile.ps1"
 }
 
 # mise config (symlink ~/.config/mise/config.toml -> dotfiles)
@@ -175,29 +244,4 @@ if (Test-Path $chocoPackagesFile) {
             Write-Host "choco install $chocoArgs -y"
             choco install @chocoArgs -y
         }
-}
-
-# mise activation in PowerShell profile
-$miseActivate = '(&mise activate pwsh) | Out-String | Invoke-Expression'
-$currentProfileContent = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
-if ($null -eq $currentProfileContent -or $currentProfileContent -notmatch "mise activate pwsh") {
-    Add-Content -Path $profilePath -Value "`n$miseActivate"
-    Write-Host "Added mise activation to $profilePath"
-} else {
-    Write-Host "mise activation already exists in $profilePath"
-}
-
-# update-tools (常用ツールの一括更新。中身は files/powershell/update-tools.ps1)
-# $PROFILE には alias の 1 行だけを書き、中身はリポジトリのスクリプトを呼ぶ (直した内容が既存のマシンにも効くように)。
-# リポジトリの置き場が変わったときに古いパスの行が残らないよう、行ごと差し替える。
-# パスの ' は '' に二重化する (そのままだと $PROFILE 全体が構文エラーになり、mise activate 等も止まる)。
-# 読み出しに失敗したら止める (空として扱うと、alias の 1 行で $PROFILE 全体を上書きしてしまう)。
-$updateToolsAlias = "Set-Alias -Name update-tools -Value '$($PSScriptRoot.Replace("'", "''"))\files\powershell\update-tools.ps1'"
-$profileLines = @(Get-Content $profilePath -ErrorAction Stop)
-if ($profileLines -notcontains $updateToolsAlias) {
-    $profileLines = @($profileLines | Where-Object { $_ -notmatch '^Set-Alias -Name update-tools ' }) + $updateToolsAlias
-    Set-Content -Path $profilePath -Value $profileLines
-    Write-Host "Set update-tools alias in $profilePath"
-} else {
-    Write-Host "update-tools alias already exists in $profilePath"
 }

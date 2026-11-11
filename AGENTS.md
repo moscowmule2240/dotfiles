@@ -34,7 +34,7 @@ macOS / Windows 両対応の個人 dotfiles。ビルド・テスト・lint は�
 |---|---|
 | `./setup.sh` | macOS セットアップ本体 (Homebrew / zsh は README の手順で事前導入) |
 | `./setup.ps1` | Windows セットアップ本体 (管理者権限で自動再起動する) |
-| `update-tools` | 常用ツール一括更新 (macOS は zsh 関数 [files/.zfunc/update-tools.zsh](files/.zfunc/update-tools.zsh)、Windows は `$PROFILE` の alias から [files/powershell/update-tools.ps1](files/powershell/update-tools.ps1)) |
+| `update-tools` | 常用ツール一括更新 (macOS は zsh 関数 [files/.zfunc/update-tools.zsh](files/.zfunc/update-tools.zsh)、Windows は [files/powershell/profile.ps1](files/powershell/profile.ps1) が張る alias から [files/powershell/update-tools.ps1](files/powershell/update-tools.ps1)) |
 | `BASH32=/bin/bash bash ci/bash-compat/check.sh --all` | bash 3.2 互換の検査 (CI の [bash-compat](.github/workflows/bash-compat.yml) と同じもの。ほかのリポジトリからも `workflow_call` で呼ばれる)。Linux でしか動かないスクリプトは先頭 10 行に `# bash-compat: linux-only`、誤検知の行は行末に `# bash-compat: ignore` |
 
 セットアップ全体を再実行して検証する手段はない (`ln -s` は既存リンクがあると失敗する
@@ -51,6 +51,9 @@ macOS / Windows 両対応の個人 dotfiles。ビルド・テスト・lint は�
 - `files/.zfunc/*` → `~/.zfunc/` (zsh の fpath / autoload 用)
 - `.gitconfig-macos` だけは例外で、setup.sh が `git config --file` で **実体ファイルを生成**する
   (絶対パスが必要な Bitwarden SSH 署名 wrapper の設定のため)
+- Windows の pwsh のプロファイルは `files/powershell/profile.ps1` が実体で、setup.ps1 は `$PROFILE` に
+  それを dot-source する 1 行だけを書く (`$PROFILE` は symlink にせず、手で足した行を残せるようにしている)。
+  関数や設定を `$PROFILE` へ直接書き込まない (後から直しても既に setup したマシンに反映されないため)
 
 ### パッケージ管理の役割分担
 

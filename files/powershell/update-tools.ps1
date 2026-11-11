@@ -1,8 +1,7 @@
 #!/usr/bin/env pwsh
 
 # よく使うソフトウェアをまとめて最新化する (Windows 版。Mac 版は files/.zfunc/update-tools.zsh)。
-# setup.ps1 が $PROFILE に update-tools の alias を足し、このスクリプトを直接呼ぶ。
-# 関数の中身を $PROFILE へ書き込まないのは、書き込むと後から直しても既に入っているマシンに反映されないため。
+# files/powershell/profile.ps1 (setup.ps1 が $PROFILE から dot-source させる) が update-tools の alias を張り、このスクリプトを直接呼ぶ。
 #
 # 対象は Mac 版の並びにそろえる (Mac 版を変えたらこちらも見直す)。Windows に相当するものが無い
 # iterm2・htop・zsh・zsh-completions・zsh-git-prompt と、config.toml で Windows を外している mise の
