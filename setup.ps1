@@ -186,3 +186,18 @@ if ($null -eq $currentProfileContent -or $currentProfileContent -notmatch "mise 
 } else {
     Write-Host "mise activation already exists in $profilePath"
 }
+
+# update-tools (常用ツールの一括更新。中身は files/powershell/update-tools.ps1)
+# $PROFILE には alias の 1 行だけを書き、中身はリポジトリのスクリプトを呼ぶ (直した内容が既存のマシンにも効くように)。
+# リポジトリの置き場が変わったときに古いパスの行が残らないよう、行ごと差し替える。
+# パスの ' は '' に二重化する (そのままだと $PROFILE 全体が構文エラーになり、mise activate 等も止まる)。
+# 読み出しに失敗したら止める (空として扱うと、alias の 1 行で $PROFILE 全体を上書きしてしまう)。
+$updateToolsAlias = "Set-Alias -Name update-tools -Value '$($PSScriptRoot.Replace("'", "''"))\files\powershell\update-tools.ps1'"
+$profileLines = @(Get-Content $profilePath -ErrorAction Stop)
+if ($profileLines -notcontains $updateToolsAlias) {
+    $profileLines = @($profileLines | Where-Object { $_ -notmatch '^Set-Alias -Name update-tools ' }) + $updateToolsAlias
+    Set-Content -Path $profilePath -Value $profileLines
+    Write-Host "Set update-tools alias in $profilePath"
+} else {
+    Write-Host "update-tools alias already exists in $profilePath"
+}
