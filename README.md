@@ -155,7 +155,7 @@ mas / redis / direnv は config.toml の `os` 指定で Windows ではスキッ�
 ### PowerShell プロファイル
 
 pwsh のプロファイルの実体は `files/powershell/profile.ps1` (ssh / scp を呼ぶたびに `~/.ssh/config` を作り直す関数、
-mise activate、`update-tools` の alias)。`setup.ps1` は `$PROFILE` にこれを dot-source する 1 行だけを書くので、
+mise activate、`update-tools` と `update-permissions` の alias)。`setup.ps1` は `$PROFILE` にこれを dot-source する 1 行だけを書くので、
 profile.ps1 を直せば既に setup したマシンにもそのまま効く。以前の `setup.ps1` が `$PROFILE` に直接書き込んだ
 SSH の関数・mise activate・`update-tools` の alias は、`setup.ps1` を流し直すと取り除かれ、取り除いた行が表示される
 (SSH の関数は書き込んだときのままのときだけ。手で直してあれば残し、profile.ps1 の定義が勝つ)。
@@ -173,3 +173,19 @@ SSH の関数・mise activate・`update-tools` の alias は、`setup.ps1` を�
 常用ツールをまとめて最新化する (macOS の `update-tools` の Windows 版。中身は `files/powershell/update-tools.ps1`)。
 alias は `files/powershell/profile.ps1` が張る。choco の更新に管理者権限が要るので、管理者でない pwsh から呼ぶと
 管理者のウィンドウを開き直して、そちらで進む。対象は macOS 版と同じ並びで、入っていないパッケージは新しく入れない。
+
+### update-permissions
+
+    update-permissions
+
+Antigravity の permissions (`~/.gemini/config/config.json`) だけを書き直す (中身は `files/powershell/update-permissions.ps1`)。
+dotmine を fetch し、取り込む変更を表示して `y` と答えたときだけ、dotmine の main を origin/main へ ff で進めてから
+dotmine の `antigravity/update-permissions.ps1` を流す。`update-tools` も最後に同じものを流すが、そちらは dotmine を取り込まない。
+こちらは choco・mise を更新せず、管理者権限も要らない。
+
+- 表示するのは取り込むファイルの一覧と、`antigravity/` の中身の差分。`y` 以外の答えや途中で止めたときは dotmine の HEAD は
+  動かない (流し直すと同じ変更をもう一度見せる)
+- 次のときは書き直さずに止まる: dotmine が main に居ない (submodule の既定の detached HEAD を含む)・main が origin/main を
+  追っていない・未コミットの変更か未追跡のファイルがある・main に origin/main に無いコミットがある・fetch できない。
+  detached なら `git -C <dotfiles>\dotmine switch main` してから流し直す
+- 引数は dotmine 側へそのまま渡す

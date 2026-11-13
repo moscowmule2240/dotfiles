@@ -35,6 +35,7 @@ macOS / Windows 両対応の個人 dotfiles。ビルド・テスト・lint は�
 | `./setup.sh` | macOS セットアップ本体 (Homebrew / zsh は README の手順で事前導入) |
 | `./setup.ps1` | Windows セットアップ本体 (管理者権限で自動再起動する) |
 | `update-tools` | 常用ツール一括更新 (macOS は zsh 関数 [files/.zfunc/update-tools.zsh](files/.zfunc/update-tools.zsh)、Windows は [files/powershell/profile.ps1](files/powershell/profile.ps1) が張る alias から [files/powershell/update-tools.ps1](files/powershell/update-tools.ps1)) |
+| `update-permissions` | Antigravity の permissions だけを書き直す (Windows。[files/powershell/profile.ps1](files/powershell/profile.ps1) が張る alias から [files/powershell/update-permissions.ps1](files/powershell/update-permissions.ps1)。dotmine を ff で取り込んでから dotmine の `antigravity/update-permissions.ps1` を流す) |
 | `BASH32=/bin/bash bash ci/bash-compat/check.sh --all` | bash 3.2 互換の検査 (CI の [bash-compat](.github/workflows/bash-compat.yml) と同じもの。ほかのリポジトリからも `workflow_call` で呼ばれる)。Linux でしか動かないスクリプトは先頭 10 行に `# bash-compat: linux-only`、誤検知の行は行末に `# bash-compat: ignore` |
 
 セットアップ全体を再実行して検証する手段はない (`ln -s` は既存リンクがあると失敗する

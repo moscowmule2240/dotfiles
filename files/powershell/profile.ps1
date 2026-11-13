@@ -32,3 +32,6 @@ if (Get-Command mise -ErrorAction SilentlyContinue) {
 
 # 常用ツールの一括更新 (中身は update-tools.ps1。choco の更新に管理者権限が要るので、必要なら自分で昇格し直す)
 Set-Alias -Name update-tools -Value (Join-Path $PSScriptRoot "update-tools.ps1")
+
+# Antigravity の permissions だけを書き直す (中身は update-permissions.ps1。dotmine を取り込んでから流す。管理者権限は要らない)
+Set-Alias -Name update-permissions -Value (Join-Path $PSScriptRoot "update-permissions.ps1")

@@ -87,7 +87,7 @@ New-Item -ItemType SymbolicLink -Path $sshConfigTarget -Target $sshConfigSource 
 # dotmine
 & "$PSScriptRoot\dotmine\setup.ps1"
 
-# PowerShell のプロファイル (実体は files/powershell/profile.ps1。SSH の関数・mise activate・update-tools の alias)
+# PowerShell のプロファイル (実体は files/powershell/profile.ps1。SSH の関数・mise activate・update-tools と update-permissions の alias)
 # $PROFILE にはその dot-source の 1 行だけを書く (中身を書き込むと、後から直しても既に setup したマシンに反映されないため)。
 # 以前の setup.ps1 が $PROFILE に書き込んだもの (SSH の関数・mise activate・update-tools の alias) は profile.ps1 へ移したので取り除く。
 # 消すのは以前の setup.ps1 が書いた形の行だけで、消した行は表示する。SSH の関数は、書き込んだときと同じ並び
