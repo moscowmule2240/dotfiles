@@ -50,7 +50,7 @@ report() {
 }
 
 # git の blob が検査の対象か。通常ファイル以外 (symlink・submodule)・表そのもの・空ファイル・バイナリは外す。
-# 対象なら中身を $tmp/blob に書き出したまま 0 を返す
+# バイナリ判定は git の判定 (先頭 8000 バイトに NUL を含む) に揃える。対象なら中身を $tmp/blob に書き出したまま 0 を返す
 prepare_target_blob() {
   case "$1" in 100*) ;; *) return 1 ;; esac
   case "$3" in
@@ -58,7 +58,9 @@ prepare_target_blob() {
   esac
   git cat-file blob "$2" > "$tmp/blob" || die "git cat-file が失敗した ($3)"
   [ -s "$tmp/blob" ] || return 1
-  LC_ALL=C grep -Iq . < "$tmp/blob"
+  head -c 8000 < "$tmp/blob" > "$tmp/head" || die "先頭の読み込みに失敗した ($3)"
+  LC_ALL=C tr -d '\000' < "$tmp/head" > "$tmp/head_nonul" || die "NUL の検査に失敗した ($3)"
+  cmp -s "$tmp/head" "$tmp/head_nonul"
 }
 
 script_dir=$(cd "$(dirname "$0")" && pwd) || die "スクリプトのディレクトリーを特定できない"
@@ -244,7 +246,8 @@ function check_line(file_idx, line_no, text,    work, i, p, bad, good, blen, res
   } else if (in_hunk && substr($0, 1, 1) == "+") {
     check_line(cur_idx, line_no, substr($0, 2))
     line_no++
-  } else if (in_hunk && substr($0, 1, 1) == " ") {
+  } else if (in_hunk && (substr($0, 1, 1) == " " || $0 == "")) {
+    # diff.interHunkContext や GIT_DIFF_OPTS 等で出る文脈行 (suppressBlankEmpty=true の空行を含む) も行番号を進める
     line_no++
   }
 }

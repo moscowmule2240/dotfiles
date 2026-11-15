@@ -294,22 +294,45 @@ test_typechange_symlink_and_file() {
   end
 }
 
-# diff.interHunkContext で複数の変更が 1 つの hunk にまとまっても、文脈行の分だけ行番号を進められる
+# diff.interHunkContext と diff.suppressBlankEmpty=true で空の文脈行を含む hunk がまとまっても、文脈行の分だけ行番号を進められる
 test_interhunk_context_line_numbers() {
   begin test_interhunk_context_line_numbers
   new_repo
-  printf '1 行目\n2 行目\n3 行目\n4 行目\n5 行目\n6 行目\n' > "$r/doc.md"
+  printf '1 行目\n2 行目\n\n4 行目\n5 行目\n6 行目\n' > "$r/doc.md"
   commit "$r" base
   base=$(git -C "$r" rev-parse HEAD)
-  printf '1 行目\nサーバの行\n3 行目\n4 行目\n5 行目\nコンテナの行\n' > "$r/doc.md" # katakana: ignore
+  printf '1 行目\nサーバの行\n\n4 行目\n5 行目\nコンテナの行\n' > "$r/doc.md" # katakana: ignore
   commit "$r" head
   head=$(git -C "$r" rev-parse HEAD)
-  export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=diff.interHunkContext GIT_CONFIG_VALUE_0=5
+  git -C "$r" config diff.interHunkContext 5
+  git -C "$r" config diff.suppressBlankEmpty true
   run_check "$r" "$base" "$head"
-  unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
   expect_rc 1
   expect_out 'doc.md:2: サーバ -> サーバー' # katakana: ignore
   expect_out 'doc.md:6: コンテナ -> コンテナー' # katakana: ignore
+  end
+}
+
+# 先頭 8000 バイトより後ろに NUL があるファイルは git と同じくテキストとして検査する
+test_late_nul_detected_beyond_8000_bytes() {
+  begin test_late_nul_detected_beyond_8000_bytes
+  new_repo
+  printf '最初の行\n' > "$r/other.md"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  {
+    printf 'サーバの行\n' # katakana: ignore
+    awk 'BEGIN { for (i = 0; i < 200; i++) print "12345678901234567890123456789012345678901234567890" }'
+    printf '\000\n'
+  } > "$r/late-nul.md"
+  commit "$r" head
+  head=$(git -C "$r" rev-parse HEAD)
+  run_check "$r" "$base" "$head"
+  expect_rc 1
+  expect_out 'late-nul.md:1: サーバ -> サーバー' # katakana: ignore
+  run_check "$r" --all
+  expect_rc 1
+  expect_out 'late-nul.md:1: サーバ -> サーバー' # katakana: ignore
   end
 }
 
@@ -324,6 +347,7 @@ test_dash_filename_and_following_files
 test_working_tree_encoding_utf16le
 test_typechange_symlink_and_file
 test_interhunk_context_line_numbers
+test_late_nul_detected_beyond_8000_bytes
 
 echo "passed: $passed, failed: $failed"
 [ "$failed" = 0 ] || { echo "failed:$failed_names"; exit 1; }
