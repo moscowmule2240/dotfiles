@@ -60,7 +60,19 @@ prepare_target_blob() {
   [ -s "$tmp/blob" ] || return 1
   head -c 8000 < "$tmp/blob" > "$tmp/head" || die "先頭の読み込みに失敗した ($3)"
   LC_ALL=C tr -d '\000' < "$tmp/head" > "$tmp/head_nonul" || die "NUL の検査に失敗した ($3)"
-  cmp -s "$tmp/head" "$tmp/head_nonul"
+  cmp_rc=0
+  cmp -s "$tmp/head" "$tmp/head_nonul" || cmp_rc=$?
+  case "$cmp_rc" in
+    0) return 0 ;;
+    1) return 1 ;;
+    *) die "NUL の比較に失敗した ($3)" ;;
+  esac
+}
+
+# macOS の awk はレコードを NUL で切るため、8000 バイトより後ろに NUL を含むテキストでも
+# CI (mawk) と結果が揃うよう、awk に渡す前に NUL を空白に置き換える (削除すると前後の語がつながる)
+copy_blob_for_awk() {
+  LC_ALL=C tr '\000' ' ' < "$tmp/blob" > "$1" || die "一時ファイルの変換に失敗した"
 }
 
 script_dir=$(cd "$(dirname "$0")" && pwd) || die "スクリプトのディレクトリーを特定できない"
@@ -115,7 +127,7 @@ EOF
       prepare_target_blob "$mode_bits" "$sha" "$f" || continue
       idx=${#files[@]}
       files+=("$f")
-      mv "$tmp/blob" "$tmp/blobs/$idx" || die "一時ファイルを移せない"
+      copy_blob_for_awk "$tmp/blobs/$idx"
       printf '=W\t%s\t%s\n' "$idx" "$tmp/blobs/$idx" >> "$tmp/input"
     done < "$tmp/list"
   fi
@@ -143,11 +155,12 @@ EOF
     case "$old_mode" in
       100*)
         printf '=D\t%s\n' "$idx" >> "$tmp/input"
-        git diff -U0 -a --no-textconv --no-color --no-ext-diff "$old_sha" "$new_sha" >> "$tmp/input" ||
+        git diff -U0 -a --no-textconv --no-color --no-ext-diff "$old_sha" "$new_sha" > "$tmp/diff" ||
           die "git diff が失敗した"
+        LC_ALL=C tr '\000' ' ' < "$tmp/diff" >> "$tmp/input" || die "diff の変換に失敗した"
         ;;
       *)
-        mv "$tmp/blob" "$tmp/blobs/$idx" || die "一時ファイルを移せない"
+        copy_blob_for_awk "$tmp/blobs/$idx"
         printf '=W\t%s\t%s\n' "$idx" "$tmp/blobs/$idx" >> "$tmp/input"
         ;;
     esac

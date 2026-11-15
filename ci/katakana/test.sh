@@ -313,26 +313,52 @@ test_interhunk_context_line_numbers() {
   end
 }
 
-# 先頭 8000 バイトより後ろに NUL があるファイルは git と同じくテキストとして検査する
+# 50 バイト行を $1 行と末尾の 'a' を $2 文字出力し、NUL のオフセットを厳密に揃える
+repeat_a() {
+  awk -v lines="$1" -v tail="$2" 'BEGIN {
+    l = ""
+    for (i = 0; i < 49; i++) l = l "a"
+    for (i = 0; i < lines; i++) print l
+    for (i = 0; i < tail; i++) printf "a"
+  }'
+}
+
+# 8000 バイト境界 (オフセット 7999 はバイナリ、8000 はテキスト) と、行途中の NUL の後ろを =W・=D・--all で検査できること
 test_late_nul_detected_beyond_8000_bytes() {
   begin test_late_nul_detected_beyond_8000_bytes
   new_repo
-  printf '最初の行\n' > "$r/other.md"
+  {
+    printf 'ok\n'
+    repeat_a 159 46
+    printf '\n'
+  } > "$r/mod-nul.md"
   commit "$r" base
   base=$(git -C "$r" rev-parse HEAD)
   {
-    printf 'サーバの行\n' # katakana: ignore
-    awk 'BEGIN { for (i = 0; i < 200; i++) print "12345678901234567890123456789012345678901234567890" }'
+    printf 'サーバ\n' # katakana: ignore
+    repeat_a 159 39
     printf '\000\n'
-  } > "$r/late-nul.md"
+  } > "$r/bin-at-7999.dat"
+  {
+    printf 'サーバ\n' # katakana: ignore
+    repeat_a 159 38
+    printf '\nx\000サーバ tail\n' # katakana: ignore
+  } > "$r/nul-at-8000.md"
+  printf 'x\000サーバ tail\n' >> "$r/mod-nul.md" # katakana: ignore
   commit "$r" head
   head=$(git -C "$r" rev-parse HEAD)
   run_check "$r" "$base" "$head"
   expect_rc 1
-  expect_out 'late-nul.md:1: サーバ -> サーバー' # katakana: ignore
+  expect_no_out 'bin-at-7999.dat'
+  expect_out 'nul-at-8000.md:1: サーバ -> サーバー' # katakana: ignore
+  expect_out 'nul-at-8000.md:162: サーバ -> サーバー' # katakana: ignore
+  expect_out 'mod-nul.md:162: サーバ -> サーバー' # katakana: ignore
   run_check "$r" --all
   expect_rc 1
-  expect_out 'late-nul.md:1: サーバ -> サーバー' # katakana: ignore
+  expect_no_out 'bin-at-7999.dat'
+  expect_out 'nul-at-8000.md:1: サーバ -> サーバー' # katakana: ignore
+  expect_out 'nul-at-8000.md:162: サーバ -> サーバー' # katakana: ignore
+  expect_out 'mod-nul.md:162: サーバ -> サーバー' # katakana: ignore
   end
 }
 
