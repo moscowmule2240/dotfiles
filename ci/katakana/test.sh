@@ -197,7 +197,7 @@ test_github_annotations() {
   end
 }
 
-# 削除したファイル・バイナリのファイル・改名しただけの既存の行で落ちず、不正な引数では exit 2 にする
+# 削除したファイル・バイナリのファイル・改名しただけの既存の行で落ちず、base が無いときは notice で exit 0、head が無いときは exit 2 にする
 test_deleted_binary_rename_and_errors() {
   begin test_deleted_binary_rename_and_errors
   new_repo
@@ -222,12 +222,29 @@ test_deleted_binary_rename_and_errors() {
   run_check "$r" "$base" 1234567890abcdef1234567890abcdef12345678
   expect_rc 2
   expect_out 'head (1234567890abcdef1234567890abcdef12345678) が commit ではない'
-  run_check "$r" 1234567890abcdef1234567890abcdef12345678 "$head"
-  expect_rc 2
-  expect_out 'base (1234567890abcdef1234567890abcdef12345678) が commit ではない'
   printf 'あとから足したサーバ\n' > "$r/later.md" # katakana: ignore
   commit "$r" later
   later=$(git -C "$r" rev-parse HEAD)
+  run_check "$r" 0000000000000000000000000000000000000000 "$later"
+  expect_rc 0
+  expect_out '比べる元が無いので検査しない (base: 0000000000000000000000000000000000000000)'
+  expect_no_out 'moved.md'
+  expect_no_out 'later.md'
+  run_check_gha "$r" 0000000000000000000000000000000000000000 "$later"
+  expect_rc 0
+  expect_out '::notice::比べる元が無いので検査しない (base: 0000000000000000000000000000000000000000)'
+  expect_no_out 'moved.md'
+  expect_no_out 'later.md'
+  run_check "$r" 1234567890abcdef1234567890abcdef12345678 "$later"
+  expect_rc 0
+  expect_out '比べる元が無いので検査しない (base: 1234567890abcdef1234567890abcdef12345678)'
+  expect_no_out 'moved.md'
+  expect_no_out 'later.md'
+  run_check_gha "$r" 1234567890abcdef1234567890abcdef12345678 "$later"
+  expect_rc 0
+  expect_out '::notice::比べる元が無いので検査しない (base: 1234567890abcdef1234567890abcdef12345678)'
+  expect_no_out 'moved.md'
+  expect_no_out 'later.md'
   printf '問題の無い行\n' > "$r/ok.md"
   commit "$r" latest
   run_check "$r" "$base" "$head"

@@ -37,6 +37,14 @@ report() {
   fi
 }
 
+notice() {
+  if $gha; then
+    printf '::notice::%s\n' "$(esc_data "$1")"
+  else
+    printf '%s\n' "$1"
+  fi
+}
+
 # git の blob が検査の対象か。通常ファイル以外 (symlink・submodule)・表そのもの・空ファイル・バイナリは外す。
 # バイナリ判定は git の判定 (先頭 8000 バイトに NUL を含む) に揃える。先頭 8000 バイトだけ読んで判定し、全量は必要なときだけ取り出す
 is_target_blob() {
@@ -98,7 +106,10 @@ elif [ "$#" = 2 ]; then
   base=$1
   head=$2
   git cat-file -e "$head^{commit}" 2>/dev/null || die "head ($head) が commit ではない"
-  git cat-file -e "$base^{commit}" 2>/dev/null || die "base ($base) が commit ではない"
+  if printf '%s' "$base" | grep -Eq '^0+$' || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+    notice "比べる元が無いので検査しない (base: $base)"
+    exit 0
+  fi
   merge_base=$(git merge-base "$base" "$head") || die "$base と $head の merge-base が無い"
 else
   die "使い方: check.sh --all | check.sh <base> <head>"
