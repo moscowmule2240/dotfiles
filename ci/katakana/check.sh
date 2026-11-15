@@ -6,7 +6,7 @@
 # 使い方 (検査するリポジトリの中で流す):
 #   check.sh --all              HEAD の commit で追跡しているファイルを全部検査する (手元用。commit していない変更は見ない)
 #   check.sh <base> <head>      <base>...<head> (merge-base から) の diff で足した行だけを検査する
-#                               (<base> がすべて 0 またはリポジトリに無い 40/64 桁の SHA のときは検査せず 0)
+#                               (<base> がすべて 0 またはリポジトリに無い 40/64 桁の SHA のときは検査せず 0。shallow clone を除く)
 # 環境変数:
 #   GITHUB_ACTIONS true なら GitHub Actions の注釈の形で出す
 # 目印:
@@ -118,8 +118,10 @@ elif [ "$#" = 2 ]; then
   git cat-file -e "$head^{commit}" 2>/dev/null || die "head ($head) が commit ではない"
   if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
     # 新規ブランチの push (すべて 0) や force push で辿れなくなった前の SHA は検査を飛ばす。
-    # 一方、存在する tree の SHA や空文字・不正な ref 名は従来どおりエラーにする
-    if is_full_oid "$base" && ! git cat-file -e "$base^{object}" 2>/dev/null; then
+    # 浅い clone では境界外の commit と辿れない SHA を区別できないため飛ばさない。
+    # 存在する tree の SHA や空文字・不正な ref 名も従来どおりエラーにする
+    if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = false ] &&
+      is_full_oid "$base" && ! git cat-file -e "$base^{object}" 2>/dev/null; then
       notice "比べる元が無いので検査しない (base: $base)"
       exit 0
     fi

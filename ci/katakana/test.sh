@@ -457,6 +457,26 @@ test_missing_base_skips() {
   end
 }
 
+# shallow clone で境界の外にある commit を base に渡したときは、skip せず exit 2 にする
+test_shallow_clone_missing_base_fails() {
+  begin test_shallow_clone_missing_base_fails
+  new_repo
+  printf '1 つ目の行\n' > "$r/a.md"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '2 つ目の行\n' >> "$r/a.md"
+  commit "$r" head
+  head=$(git -C "$r" rev-parse HEAD)
+  shallow_parent=$(mktemp -d "$work/shallow.XXXXXX") || exit 1
+  shallow="$shallow_parent/repo"
+  git clone -q --depth 1 "file://$r" "$shallow" || exit 1
+  run_check "$shallow" "$base" "$head"
+  expect_rc 2
+  expect_out "base ($base) が commit ではない"
+  expect_no_out '比べる元が無いので検査しない'
+  end
+}
+
 test_added_line_detected
 test_unchanged_and_three_dot_diff
 test_same_line_occurrence_matching
@@ -465,6 +485,7 @@ test_ignore_marker_and_y_words_and_tables
 test_github_annotations
 test_deleted_binary_rename_and_errors
 test_missing_base_skips
+test_shallow_clone_missing_base_fails
 test_dash_filename_and_following_files
 test_working_tree_encoding_utf16le
 test_typechange_symlink_and_file
