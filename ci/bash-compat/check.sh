@@ -53,20 +53,8 @@ die() {
   exit 2
 }
 
-# GitHub Actions の注釈の値のエスケープ。値は % と改行、プロパティはさらに : と ,
-esc_data() {
-  s=$1
-  s=${s//"%"/%25}
-  s=${s//$'\r'/%0D}
-  s=${s//$'\n'/%0A}
-  printf '%s' "$s"
-}
-esc_prop() {
-  s=$(esc_data "$1")
-  s=${s//":"/%3A}
-  s=${s//","/%2C}
-  printf '%s' "$s"
-}
+script_dir=$(cd "$(dirname "$0")" && pwd) || die "スクリプトのディレクトリーを特定できない"
+. "$script_dir/../lib/gha.sh" || die "共通スクリプト ($script_dir/../lib/gha.sh) を読み込めない"
 
 gha=false
 [ "${GITHUB_ACTIONS:-}" = true ] && gha=true
@@ -247,7 +235,7 @@ if [ "$mode" = diff ]; then
   git diff -z --name-only --no-ext-diff --no-renames "$merge_base" "$head" > "$tmp/all-changed" || die "git diff が失敗した"
   while IFS= read -r -d '' f; do
     case "$f" in
-      .github/workflows/* | ci/bash-compat/* | .bash-compat/* | .shellcheckrc | shellcheckrc | */.shellcheckrc | */shellcheckrc | .gitattributes | */.gitattributes)
+      .github/workflows/* | ci/bash-compat/* | .bash-compat/* | ci/katakana/* | ci/lib/* | .shellcheckrc | shellcheckrc | */.shellcheckrc | */shellcheckrc | .gitattributes | */.gitattributes)
         warn "$f" '' "CI の設定が変わった。結果を信用せず差分を見ること"
         ;;
     esac

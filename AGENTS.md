@@ -37,6 +37,7 @@ macOS / Windows 両対応の個人 dotfiles。ビルド・テスト・lint は�
 | `update-tools` | 常用ツール一括更新 (macOS は zsh 関数 [files/.zfunc/update-tools.zsh](files/.zfunc/update-tools.zsh)、Windows は [files/powershell/profile.ps1](files/powershell/profile.ps1) が張る alias から [files/powershell/update-tools.ps1](files/powershell/update-tools.ps1)) |
 | `update-permissions` | Antigravity の permissions だけを書き直す (Windows。[files/powershell/profile.ps1](files/powershell/profile.ps1) が張る alias から [files/powershell/update-permissions.ps1](files/powershell/update-permissions.ps1)。dotmine を ff で取り込んでから dotmine の `antigravity/update-permissions.ps1` を流す) |
 | `BASH32=/bin/bash bash ci/bash-compat/check.sh --all` | bash 3.2 互換の検査 (CI の [bash-compat](.github/workflows/bash-compat.yml) と同じもの。ほかのリポジトリからも `workflow_call` で呼ばれる)。Linux でしか動かないスクリプトは先頭 10 行に `# bash-compat: linux-only`、誤検知の行は行末に `# bash-compat: ignore` |
+| `bash ci/katakana/check.sh --all` | カタカナ語の語尾の長音符の検査 (HEAD の commit で追跡しているファイルを全部検査し、commit していない変更は見ない。手元で既存の違反を数える用。CI の [katakana](.github/workflows/katakana.yml) は変更で足した行だけを検査し、ほかのリポジトリからも `workflow_call` で呼ばれる)。誤検知の行は `katakana: ignore` を入れる |
 
 セットアップ全体を再実行して検証する手段はない (`ln -s` は既存リンクがあると失敗する
 非冪等な作り)。変更の検証は該当ステップのコマンドを単体で流すこと。
