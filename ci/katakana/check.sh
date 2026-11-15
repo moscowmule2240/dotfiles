@@ -6,11 +6,12 @@
 # 使い方 (検査するリポジトリの中で流す):
 #   check.sh --all              HEAD の commit で追跡しているファイルを全部検査する (手元用。commit していない変更は見ない)
 #   check.sh <base> <head>      <base>...<head> (merge-base から) の diff で足した行だけを検査する
+#                               (<base> がすべて 0 またはリポジトリに無い 40/64 桁の SHA のときは検査せず 0)
 # 環境変数:
 #   GITHUB_ACTIONS true なら GitHub Actions の注釈の形で出す
 # 目印:
 #   行のどこかの「katakana: ignore」  その行だけ検査を飛ばす
-# exit: 0 = 指摘なし、1 = 指摘あり、2 = 検査できない
+# exit: 0 = 指摘なし (または比べる元が無いので検査しない)、1 = 指摘あり、2 = 検査できない
 # bash 3.2 で動かすため、連想配列・mapfile は使わない。
 set -u
 
@@ -43,6 +44,15 @@ notice() {
   else
     printf '%s\n' "$1"
   fi
+}
+
+# 40 桁 (SHA-1) または 64 桁 (SHA-256) の完全な 16 進数オブジェクト ID か。
+# 空文字や打ち間違えた ref 名を「辿れない SHA」と取り違えないために使う
+is_full_oid() {
+  case "$1" in
+    '' | *[!0123456789abcdefABCDEF]*) return 1 ;;
+  esac
+  [ "${#1}" = 40 ] || [ "${#1}" = 64 ]
 }
 
 # git の blob が検査の対象か。通常ファイル以外 (symlink・submodule)・表そのもの・空ファイル・バイナリは外す。
@@ -106,9 +116,14 @@ elif [ "$#" = 2 ]; then
   base=$1
   head=$2
   git cat-file -e "$head^{commit}" 2>/dev/null || die "head ($head) が commit ではない"
-  if printf '%s' "$base" | grep -Eq '^0+$' || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
-    notice "比べる元が無いので検査しない (base: $base)"
-    exit 0
+  if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+    # 新規ブランチの push (すべて 0) や force push で辿れなくなった前の SHA は検査を飛ばす。
+    # 一方、存在する tree の SHA や空文字・不正な ref 名は従来どおりエラーにする
+    if is_full_oid "$base" && ! git cat-file -e "$base^{object}" 2>/dev/null; then
+      notice "比べる元が無いので検査しない (base: $base)"
+      exit 0
+    fi
+    die "base ($base) が commit ではない"
   fi
   merge_base=$(git merge-base "$base" "$head") || die "$base と $head の merge-base が無い"
 else

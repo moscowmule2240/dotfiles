@@ -41,7 +41,7 @@ commit() {
 run_check() {
   dir=$1
   shift
-  out=$(cd "$dir" && "$BASH" "$check" "$@" 2>&1)
+  out=$(unset GITHUB_ACTIONS && cd "$dir" && "$BASH" "$check" "$@" 2>&1)
   rc=$?
   out_shown=false
 }
@@ -197,7 +197,7 @@ test_github_annotations() {
   end
 }
 
-# 削除したファイル・バイナリのファイル・改名しただけの既存の行で落ちず、base が無いときは notice で exit 0、head が無いときは exit 2 にする
+# 削除したファイル・バイナリのファイル・改名しただけの既存の行で落ちず、不正な引数では exit 2 にする
 test_deleted_binary_rename_and_errors() {
   begin test_deleted_binary_rename_and_errors
   new_repo
@@ -222,29 +222,25 @@ test_deleted_binary_rename_and_errors() {
   run_check "$r" "$base" 1234567890abcdef1234567890abcdef12345678
   expect_rc 2
   expect_out 'head (1234567890abcdef1234567890abcdef12345678) が commit ではない'
+  run_check "$r" 0000000000000000000000000000000000000000 1234567890abcdef1234567890abcdef12345678
+  expect_rc 2
+  expect_out 'head (1234567890abcdef1234567890abcdef12345678) が commit ではない'
+  run_check "$r" '' "$head"
+  expect_rc 2
+  expect_out 'base () が commit ではない'
+  run_check "$r" not-a-ref "$head"
+  expect_rc 2
+  expect_out 'base (not-a-ref) が commit ではない'
+  run_check "$r" 1234567 "$head"
+  expect_rc 2
+  expect_out 'base (1234567) が commit ではない'
+  tree=$(git -C "$r" rev-parse "$head^{tree}")
+  run_check "$r" "$tree" "$head"
+  expect_rc 2
+  expect_out "base ($tree) が commit ではない"
   printf 'あとから足したサーバ\n' > "$r/later.md" # katakana: ignore
   commit "$r" later
   later=$(git -C "$r" rev-parse HEAD)
-  run_check "$r" 0000000000000000000000000000000000000000 "$later"
-  expect_rc 0
-  expect_out '比べる元が無いので検査しない (base: 0000000000000000000000000000000000000000)'
-  expect_no_out 'moved.md'
-  expect_no_out 'later.md'
-  run_check_gha "$r" 0000000000000000000000000000000000000000 "$later"
-  expect_rc 0
-  expect_out '::notice::比べる元が無いので検査しない (base: 0000000000000000000000000000000000000000)'
-  expect_no_out 'moved.md'
-  expect_no_out 'later.md'
-  run_check "$r" 1234567890abcdef1234567890abcdef12345678 "$later"
-  expect_rc 0
-  expect_out '比べる元が無いので検査しない (base: 1234567890abcdef1234567890abcdef12345678)'
-  expect_no_out 'moved.md'
-  expect_no_out 'later.md'
-  run_check_gha "$r" 1234567890abcdef1234567890abcdef12345678 "$later"
-  expect_rc 0
-  expect_out '::notice::比べる元が無いので検査しない (base: 1234567890abcdef1234567890abcdef12345678)'
-  expect_no_out 'moved.md'
-  expect_no_out 'later.md'
   printf '問題の無い行\n' > "$r/ok.md"
   commit "$r" latest
   run_check "$r" "$base" "$head"
@@ -428,6 +424,39 @@ test_large_blob_beyond_pipe_buffer() {
   end
 }
 
+# base がすべて 0 または存在しない 40/64 桁の SHA のときは、省略形があっても検査せず notice で exit 0 にする
+test_missing_base_skips() {
+  begin test_missing_base_skips
+  new_repo
+  printf 'サーバの記述\n' > "$r/doc.md" # katakana: ignore
+  commit "$r" base
+  printf 'コンテナの記述\n' > "$r/added.md" # katakana: ignore
+  commit "$r" head
+  head=$(git -C "$r" rev-parse HEAD)
+  run_check "$r" --all
+  expect_rc 1
+  expect_out 'doc.md:1: サーバ -> サーバー' # katakana: ignore
+  expect_out 'added.md:1: コンテナ -> コンテナー' # katakana: ignore
+  zero40='0000000000000000000000000000000000000000'
+  zero64='0000000000000000000000000000000000000000000000000000000000000000'
+  missing40='1234567890abcdef1234567890abcdef12345678'
+  missing64='1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
+  for b in "$zero40" "$zero64" "$missing40" "$missing64"; do
+    run_check "$r" "$b" "$head"
+    expect_rc 0
+    expect_out "比べる元が無いので検査しない (base: $b)"
+    expect_no_out '::notice::'
+    expect_no_out 'doc.md'
+    expect_no_out 'added.md'
+    run_check_gha "$r" "$b" "$head"
+    expect_rc 0
+    expect_out "::notice::比べる元が無いので検査しない (base: $b)"
+    expect_no_out 'doc.md'
+    expect_no_out 'added.md'
+  done
+  end
+}
+
 test_added_line_detected
 test_unchanged_and_three_dot_diff
 test_same_line_occurrence_matching
@@ -435,6 +464,7 @@ test_exceptions_and_compounds
 test_ignore_marker_and_y_words_and_tables
 test_github_annotations
 test_deleted_binary_rename_and_errors
+test_missing_base_skips
 test_dash_filename_and_following_files
 test_working_tree_encoding_utf16le
 test_typechange_symlink_and_file
