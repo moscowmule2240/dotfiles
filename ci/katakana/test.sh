@@ -40,12 +40,40 @@ run_check() {
   shift
   out=$(cd "$dir" && bash "$check" "$@" 2>&1)
   rc=$?
+  out_shown=false
+}
+
+run_check_gha() {
+  dir=$1
+  shift
+  out=$(cd "$dir" && GITHUB_ACTIONS=true bash "$check" "$@" 2>&1)
+  rc=$?
+  out_shown=false
 }
 
 # 1 つのテストの中の失敗を数え、終わりに合否を記録する
-begin() { name=$1; problems=""; }
-fail_because() { problems="$problems
-  - $1"; }
+begin() { name=$1; problems=""; out=""; rc=""; out_shown=false; }
+record_out() {
+  if ! $out_shown; then
+    out_shown=true
+    if [ -n "$out" ]; then
+      while IFS= read -r line; do
+        problems="$problems
+    | $line"
+      done <<EOF
+$out
+EOF
+    else
+      problems="$problems
+    | (出力なし)"
+    fi
+  fi
+}
+fail_because() {
+  problems="$problems
+  - $1"
+  record_out
+}
 expect_rc() { [ "$rc" = "$1" ] || fail_because "exit $rc (期待は $1)"; }
 expect_out() { case "$out" in *"$1"*) ;; *) fail_because "出力に「$1」が無い" ;; esac; }
 expect_no_out() { case "$out" in *"$1"*) fail_because "出力に「$1」がある" ;; esac; }
@@ -57,7 +85,6 @@ end() {
     failed=$((failed + 1))
     failed_names="$failed_names $name"
     echo "FAIL $name$problems"
-    printf '%s\n' "$out" | sed 's/^/    | /'
   fi
 }
 
@@ -69,30 +96,31 @@ test_added_line_detected() {
   commit "$r" base
   base=$(git -C "$r" rev-parse HEAD)
   printf '*.md -diff\n' > "$r/.gitattributes"
-  printf '最初の行\nサーバを立てる\nコンテナを動かす\nブラウザーで開く\n' > "$r/doc.md" # katakana: ignore
+  printf '最初の行\nサーバを立てる\nコンテナを動かす\nブラウザーで開く\nエミュレータを使う\n' > "$r/doc.md" # katakana: ignore
   commit "$r" head
   run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
   expect_rc 1
   expect_out 'doc.md:2: サーバ -> サーバー' # katakana: ignore
   expect_out 'doc.md:3: コンテナ -> コンテナー' # katakana: ignore
+  expect_out 'doc.md:5: エミュレータ -> エミュレーター' # katakana: ignore
   expect_no_out 'doc.md:1:'
   expect_no_out 'doc.md:4:'
   end
 }
 
-# 変更の無い既存の行や、merge-base から見て base 側だけで入った省略形は指摘しない (--all では既存の行も拾う)
+# 変更の無い既存の行や、base 側だけで直したファイルは指摘しない (--all では既存の行も拾う)
 test_unchanged_and_three_dot_diff() {
   begin test_unchanged_and_three_dot_diff
   new_repo
   printf '既存のサーバの記述\n' > "$r/edit.md" # katakana: ignore
-  printf '共通の行\n' > "$r/main-only.md"
+  printf '既存のポインタ\n' > "$r/main-only.md" # katakana: ignore
   commit "$r" init
   git -C "$r" switch -q -c pr
   printf '既存のサーバの記述\n新しく足したサーバーの記述\n' > "$r/edit.md" # katakana: ignore
   commit "$r" pr
   pr=$(git -C "$r" rev-parse HEAD)
   git -C "$r" switch -q main
-  printf '共通の行\nポインタを足す\n' > "$r/main-only.md" # katakana: ignore
+  printf '既存のポインター\n' > "$r/main-only.md"
   commit "$r" main-only
   main=$(git -C "$r" rev-parse HEAD)
   git -C "$r" switch -q pr
@@ -101,6 +129,7 @@ test_unchanged_and_three_dot_diff() {
   run_check "$r" --all
   expect_rc 1
   expect_out 'edit.md:1: サーバ -> サーバー' # katakana: ignore
+  expect_out 'main-only.md:1: ポインタ -> ポインター' # katakana: ignore
   end
 }
 
@@ -122,7 +151,7 @@ test_same_line_occurrence_matching() {
 test_exceptions_and_compounds() {
   begin test_exceptions_and_compounds
   new_repo
-  printf 'ユーザビリティとモニタリングとフィルタリングとマスタリングとバッファリング\n' > "$r/a.md" # katakana: ignore
+  printf 'エディタブルとサーバントとバッファローとユーザビリティとモニタリングとフィルタリングとマスタリングとバッファリング\n' > "$r/a.md" # katakana: ignore
   printf 'ユーザビリティの高いユーザ向け画面\n' >> "$r/a.md" # katakana: ignore
   printf 'サーバレスとコンテナイメージ\n' >> "$r/a.md" # katakana: ignore
   commit "$r" init
@@ -157,8 +186,7 @@ test_github_annotations() {
   new_repo
   printf '1 行目\nポインタを渡す\n' > "$r/a,b:c.md" # katakana: ignore
   commit "$r" init
-  out=$(cd "$r" && GITHUB_ACTIONS=true bash "$check" --all 2>&1)
-  rc=$?
+  run_check_gha "$r" --all
   expect_rc 1
   expect_out '::error file=a%2Cb%3Ac.md,line=2::ポインタ -> ポインター' # katakana: ignore
   end
@@ -169,7 +197,7 @@ test_deleted_binary_rename_and_errors() {
   begin test_deleted_binary_rename_and_errors
   new_repo
   printf '消すサーバの行\n' > "$r/gone.md" # katakana: ignore
-  printf 'もとからあるブラウザの行\n' > "$r/keep.md" # katakana: ignore
+  printf '1 行目の説明文\n2 行目の説明文\nもとからあるブラウザの行\n4 行目の説明文\n' > "$r/keep.md" # katakana: ignore
   commit "$r" base
   base=$(git -C "$r" rev-parse HEAD)
   git -C "$r" rm -q gone.md
@@ -183,13 +211,84 @@ test_deleted_binary_rename_and_errors() {
   expect_rc 0
   run_check "$r" --all
   expect_rc 1
-  expect_out 'moved.md:1: ブラウザ -> ブラウザー' # katakana: ignore
+  expect_out 'moved.md:3: ブラウザ -> ブラウザー' # katakana: ignore
   expect_no_out 'bin.dat'
   expect_no_out 'link.md'
   run_check "$r" "$base" 1234567890abcdef1234567890abcdef12345678
   expect_rc 2
+  expect_out 'head (1234567890abcdef1234567890abcdef12345678) が commit ではない'
+  run_check "$r" 1234567890abcdef1234567890abcdef12345678 "$head"
+  expect_rc 2
+  expect_out 'base (1234567890abcdef1234567890abcdef12345678) が commit ではない'
   run_check "$r" "$base" "$base"
   expect_rc 2
+  expect_out "作業ツリーの HEAD が head ($base) と違う"
+  end
+}
+
+# 直下に「-」というファイルがあっても標準入力として読まれず、後ろのファイルも検査される
+test_dash_filename_and_following_files() {
+  begin test_dash_filename_and_following_files
+  new_repo
+  printf '最初のファイル\n' > "$r/a.md"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf 'サーバ\n' > "$r/-" # katakana: ignore
+  printf 'コンテナ\n' > "$r/z.md" # katakana: ignore
+  commit "$r" head
+  head=$(git -C "$r" rev-parse HEAD)
+  run_check "$r" "$base" "$head"
+  expect_rc 1
+  expect_out '-:1: サーバ -> サーバー' # katakana: ignore
+  expect_out 'z.md:1: コンテナ -> コンテナー' # katakana: ignore
+  run_check "$r" --all
+  expect_rc 1
+  expect_out '-:1: サーバ -> サーバー' # katakana: ignore
+  expect_out 'z.md:1: コンテナ -> コンテナー' # katakana: ignore
+  end
+}
+
+# working-tree-encoding で作業ツリーがバイナリに見えるファイルも git の blob から検査する
+test_working_tree_encoding_utf16le() {
+  begin test_working_tree_encoding_utf16le
+  new_repo
+  printf 'utf16.md working-tree-encoding=UTF-16LE\n' > "$r/.gitattributes"
+  printf '最初の行\n' | iconv -f UTF-8 -t UTF-16LE > "$r/utf16.md"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '最初の行\nサーバを足す\n' | iconv -f UTF-8 -t UTF-16LE > "$r/utf16.md" # katakana: ignore
+  commit "$r" head
+  head=$(git -C "$r" rev-parse HEAD)
+  run_check "$r" "$base" "$head"
+  expect_rc 1
+  expect_out 'utf16.md:2: サーバ -> サーバー' # katakana: ignore
+  run_check "$r" --all
+  expect_rc 1
+  expect_out 'utf16.md:2: サーバ -> サーバー' # katakana: ignore
+  end
+}
+
+# symlink からファイルへの typechange で見出しを 0 行目として誤照合せず、ファイルから symlink への typechange は外す
+test_typechange_symlink_and_file() {
+  begin test_typechange_symlink_and_file
+  new_repo
+  printf '通常の内容\n' > "$r/target.md"
+  ln -s target.md "$r/サーバ.md" # katakana: ignore
+  printf '消える前にあった行\n' > "$r/to-link.md"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  rm "$r/サーバ.md" # katakana: ignore
+  printf '1 行目は正しいサーバー\n2 行目はサーバ\n' > "$r/サーバ.md" # katakana: ignore
+  rm "$r/to-link.md"
+  ln -s サーバ.md "$r/to-link.md" # katakana: ignore
+  commit "$r" head
+  head=$(git -C "$r" rev-parse HEAD)
+  run_check "$r" "$base" "$head"
+  expect_rc 1
+  expect_no_out 'サーバ.md:0:' # katakana: ignore
+  expect_no_out 'サーバ.md:1:' # katakana: ignore
+  expect_out 'サーバ.md:2: サーバ -> サーバー' # katakana: ignore
+  expect_no_out 'to-link.md'
   end
 }
 
@@ -200,6 +299,9 @@ test_exceptions_and_compounds
 test_ignore_marker_and_y_words_and_tables
 test_github_annotations
 test_deleted_binary_rename_and_errors
+test_dash_filename_and_following_files
+test_working_tree_encoding_utf16le
+test_typechange_symlink_and_file
 
 echo "passed: $passed, failed: $failed"
 [ "$failed" = 0 ] || { echo "failed:$failed_names"; exit 1; }

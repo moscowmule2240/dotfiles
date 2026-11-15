@@ -49,14 +49,16 @@ report() {
   fi
 }
 
-# 作業ツリーのファイルが検査の対象か。symlink・空のファイル・バイナリのファイル・表そのものは外す
-is_target() {
-  [ -f "$1" ] && [ ! -L "$1" ] || return 1
-  case "$1" in
+# git の blob が検査の対象か。通常ファイル以外 (symlink・submodule)・表そのもの・空ファイル・バイナリは外す。
+# 対象なら中身を $tmp/blob に書き出したまま 0 を返す
+prepare_target_blob() {
+  case "$1" in 100*) ;; *) return 1 ;; esac
+  case "$3" in
     ci/katakana/words.tsv | ci/katakana/exceptions.txt) return 1 ;;
   esac
-  [ -s "$1" ] || return 1
-  LC_ALL=C grep -Iq . -- "$1"
+  git cat-file blob "$2" > "$tmp/blob" || die "git cat-file が失敗した ($3)"
+  [ -s "$tmp/blob" ] || return 1
+  LC_ALL=C grep -Iq . < "$tmp/blob"
 }
 
 script_dir=$(cd "$(dirname "$0")" && pwd) || die "スクリプトのディレクトリーを特定できない"
@@ -91,31 +93,62 @@ tmp=$(mktemp -d) || die "一時ディレクトリーを作れない"
 trap 'rm -rf "$tmp"' EXIT
 
 # ---- 対象の一覧と入力の組み立て
+mkdir -p "$tmp/blobs" || die "作業ディレクトリーを作れない"
 : > "$tmp/input"
 files=()
+tab=$'\t'
 if [ "$mode" = all ]; then
-  git ls-files -z > "$tmp/list" || die "git ls-files が失敗した"
-  while IFS= read -r -d '' f; do
-    [ -e "$f" ] || [ -L "$f" ] || die "一覧にある $f が作業ツリーに無い"
-    if is_target "$f"; then
+  if git rev-parse --verify -q HEAD >/dev/null; then
+    git ls-tree -r -z HEAD > "$tmp/list" || die "git ls-tree が失敗した"
+    while IFS= read -r -d '' entry; do
+      meta=${entry%%"$tab"*}
+      f=${entry#*"$tab"}
+      mode_bits=''
+      obj_type=''
+      sha=''
+      IFS=' ' read -r mode_bits obj_type sha <<EOF
+$meta
+EOF
+      [ "$obj_type" = blob ] || continue
+      prepare_target_blob "$mode_bits" "$sha" "$f" || continue
       idx=${#files[@]}
       files+=("$f")
-      printf 'F%s\t%s\n' "$idx" "$f" >> "$tmp/input"
-    fi
-  done < "$tmp/list"
+      mv "$tmp/blob" "$tmp/blobs/$idx" || die "一時ファイルを移せない"
+      printf '=W\t%s\t%s\n' "$idx" "$tmp/blobs/$idx" >> "$tmp/input"
+    done < "$tmp/list"
+  fi
 else
-  git diff -z --name-status --no-ext-diff --diff-filter=ACMRT -M "$merge_base" "$head" > "$tmp/status" || die "git diff が失敗した"
-  while IFS= read -r -d '' st; do
+  git diff -z --raw --no-abbrev --no-ext-diff --diff-filter=ACMRT -M "$merge_base" "$head" > "$tmp/status" || die "git diff が失敗した"
+  while IFS= read -r -d '' meta; do
     IFS= read -r -d '' old || break
     new=$old
+    old_mode=''
+    new_mode=''
+    old_sha=''
+    new_sha=''
+    st=''
+    IFS=' ' read -r old_mode new_mode old_sha new_sha st <<EOF
+$meta
+EOF
     case "$st" in R* | C*) IFS= read -r -d '' new || break ;; esac
-    [ -e "$new" ] || [ -L "$new" ] || die "一覧にある $new が作業ツリーに無い"
-    is_target "$new" || continue
+    old_mode=${old_mode#:}
+    case "$old_mode" in
+      100*) [ "$old_sha" = "$new_sha" ] && continue ;;
+    esac
+    prepare_target_blob "$new_mode" "$new_sha" "$new" || continue
     idx=${#files[@]}
     files+=("$new")
-    printf 'F%s\n' "$idx" >> "$tmp/input"
-    git --literal-pathspecs diff -U0 -a -M --no-textconv --no-color --no-ext-diff "$merge_base" "$head" -- "$old" "$new" >> "$tmp/input" ||
-      die "git diff が失敗した"
+    case "$old_mode" in
+      100*)
+        printf '=D\t%s\n' "$idx" >> "$tmp/input"
+        git diff -U0 -a --no-textconv --no-color --no-ext-diff "$old_sha" "$new_sha" >> "$tmp/input" ||
+          die "git diff が失敗した"
+        ;;
+      *)
+        mv "$tmp/blob" "$tmp/blobs/$idx" || die "一時ファイルを移せない"
+        printf '=W\t%s\t%s\n' "$idx" "$tmp/blobs/$idx" >> "$tmp/input"
+        ;;
+    esac
   done < "$tmp/status"
 fi
 
@@ -124,7 +157,7 @@ if [ ! -s "$tmp/input" ]; then
 fi
 
 # ---- 出現ごとの照合 (LC_ALL=C でバイト列として扱い、例外の語を取り除いた後に直後の 3 バイトで長音符を見分ける)
-LC_ALL=C awk -v mode="$mode" -v words_file="$words_file" -v exceptions_file="$exceptions_file" '
+LC_ALL=C awk -v words_file="$words_file" -v exceptions_file="$exceptions_file" '
 BEGIN {
   choon = "ー"
   n_words = 0
@@ -181,23 +214,24 @@ function check_line(file_idx, line_no, text,    work, i, p, bad, good, blen, res
   }
 }
 
-mode == "all" && /^F/ {
-  t = index($0, "\t")
-  cur_idx = substr($0, 2, t - 2)
-  cur_file = substr($0, t + 1)
-  line_no = 0
-  while ((r = (getline l < cur_file)) > 0) {
-    line_no++
-    check_line(cur_idx, line_no, l)
-  }
-  if (r < 0) exit 2
-  close(cur_file)
-  next
-}
-
-mode == "diff" {
-  if (substr($0, 1, 1) == "F") {
-    cur_idx = substr($0, 2)
+{
+  if (substr($0, 1, 3) == "=W\t") {
+    in_hunk = 0
+    rest_line = substr($0, 4)
+    t = index(rest_line, "\t")
+    cur_idx = substr(rest_line, 1, t - 1)
+    blob_path = substr(rest_line, t + 1)
+    line_no = 0
+    while ((r = (getline l < blob_path)) > 0) {
+      line_no++
+      check_line(cur_idx, line_no, l)
+    }
+    if (r < 0) exit 2
+    close(blob_path)
+  } else if (substr($0, 1, 3) == "=D\t") {
+    cur_idx = substr($0, 4)
+    in_hunk = 0
+  } else if (substr($0, 1, 11) == "diff --git ") {
     in_hunk = 0
   } else if (substr($0, 1, 3) == "@@ ") {
     p = index($0, " +")
