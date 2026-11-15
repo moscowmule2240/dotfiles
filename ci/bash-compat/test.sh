@@ -655,6 +655,102 @@ test_bash32_stderr_noise_ok() {
   end
 }
 
+# GitHub Actions では、止まるときのメッセージも注釈の形でエスケープする。ファイル名に改行と :: を入れて、
+# 偽のワークフローのコマンドの行を作らせない
+test_die_escaped_in_annotations() {
+  begin test_die_escaped_in_annotations
+  new_repo
+  printf 'x\n' > "$r/README"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  n=$'gone\n::warning::injected.sh'
+  printf '#!/bin/bash\necho x\n' > "$r/$n"
+  commit "$r" head
+  rm "$r/$n"
+  out=$(cd "$r" && GITHUB_ACTIONS=true bash "$check" "$base" "$(git -C "$r" rev-parse HEAD)" 2>&1)
+  rc=$?
+  expect_rc 2
+  expect_out '::error::'
+  printf '%s\n' "$out" | grep -q '^::warning::injected' && fail_because "ファイル名の中の :: が行頭に出た"
+  end
+}
+
+# GitHub Actions の外でも、ファイル名の改行と ESC をエスケープして、偽の指摘の行を作ったり端末の上で前の行を消したりさせない。
+# \ はそのまま出す (倍にすると ShellCheck の助言の引用などが別のコードに見える)
+test_local_names_escaped() {
+  begin test_local_names_escaped
+  new_repo
+  printf '#!/bin/bash\ndeclare -A m\n' > "$r/"$'evil\nzz\033[2K.sh' # bash-compat: ignore
+  printf '#!/bin/bash\ndeclare -A m\n' > "$r/back\\slash.sh" # bash-compat: ignore
+  commit "$r" init
+  run_check "$r" --all
+  expect_rc 1
+  expect_out 'evil\nzz?[2K.sh:2: bash4-syntax: declare・local・typeset の -A'
+  printf '%s\n' "$out" | grep -q '^zz' && fail_because "ファイル名の改行の後ろが行頭に出た"
+  case "$out" in *$'\033'*) fail_because "ESC がそのまま出た" ;; esac
+  expect_out 'back\slash.sh:2: bash4-syntax'
+  expect_no_out 'back\\slash.sh'
+  end
+}
+
+# 1 行に 2 種類の構文がある行と、当たりの間のコメント・ignore の行があっても、種類と行番号を取り違えない
+test_bash4_labels_and_lines() {
+  begin test_bash4_labels_and_lines
+  new_repo
+  {
+    printf '#!/bin/bash\n'
+    printf 'declare -A m; echo "${x,,}"\n' # bash-compat: ignore
+    printf '# mapfile in a comment\n' # bash-compat: ignore
+    printf 'mapfile -t a < f # bash-compat: ignore\n' # bash-compat: ignore
+    printf 'echo "${a[-1]}"\n' # bash-compat: ignore
+  } > "$r/m.sh"
+  commit "$r" init
+  run_check "$r" --all
+  expect_rc 1
+  expect_out 'm.sh:2: bash4-syntax: declare・local・typeset の -A'
+  expect_out 'm.sh:2: bash4-syntax: ${var,,}' # bash-compat: ignore
+  expect_out 'm.sh:5: bash4-syntax: ${a[-1]} の負の添字' # bash-compat: ignore
+  n=$(printf '%s\n' "$out" | grep -c ': bash4-syntax: ')
+  [ "$n" = 3 ] || fail_because "bash4-syntax の行が $n (期待は 3)"
+  end
+}
+
+# merge-base で *.sh という名前のディレクトリーだったものは、検査の対象だったことにしない
+# (中のファイル名で、Linux 専用の目印がもとからあったように見せられないように)
+test_base_directory_not_target() {
+  begin test_base_directory_not_target
+  new_repo
+  mkdir "$r/a.sh"
+  printf 'x\n' > "$r/a.sh/# bash-compat: linux-only"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  rm -r "$r/a.sh"
+  printf '#!/bin/bash\n# bash-compat: linux-only\necho a\n' > "$r/a.sh"
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_out 'a.sh: warning: Linux 専用の目印が効くようになった'
+  end
+}
+
+# symlink は検査の対象ではないので、指す先を変えても消しても「対象から外れた」「消した」と言わない
+test_symlink_changes_quiet() {
+  begin test_symlink_changes_quiet
+  new_repo
+  printf '#!/bin/bash\necho a\n' > "$r/a.sh"
+  printf '#!/bin/bash\necho b\n' > "$r/b.sh"
+  ln -s a.sh "$r/link.sh"
+  ln -s a.sh "$r/gone-link.sh"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  rm "$r/link.sh" "$r/gone-link.sh"
+  ln -s b.sh "$r/link.sh"
+  commit "$r" head
+  run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
+  expect_rc 0
+  expect_no_out 'link.sh'
+  end
+}
+
 test_dotfiles_itself_clean() {
   begin test_dotfiles_itself_clean
   run_check "$repo_root" --all
@@ -696,6 +792,11 @@ test_bash32_unavailable_fails
 test_bash32_not_32_fails
 test_shellcheck_follows_source
 test_bash32_stderr_noise_ok
+test_die_escaped_in_annotations
+test_local_names_escaped
+test_bash4_labels_and_lines
+test_base_directory_not_target
+test_symlink_changes_quiet
 test_dotfiles_itself_clean
 
 echo "passed: $passed, failed: $failed"
