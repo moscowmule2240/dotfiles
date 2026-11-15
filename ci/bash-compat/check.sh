@@ -48,16 +48,34 @@ add_bash4 '(^|[;&|[:space:]])coproc([[:space:]]|$)' 'coproc' # bash-compat: igno
 add_bash4 '\{-?[0-9A-Za-z]+\.\.-?[0-9A-Za-z]+\.\.-?[0-9]+\}' '{1..10..2} の刻み付きの展開' # bash-compat: ignore
 add_bash4 '\{-?0[0-9]+\.\.-?[0-9]+\}' '{01..03} の 0 埋めの展開' # bash-compat: ignore
 
+gha=false
+[ "${GITHUB_ACTIONS:-}" = true ] && gha=true
+
+# GitHub Actions の外で出す値。ファイル名や ShellCheck の出力の制御文字で、偽の行を作ったり端末の上で前の行を
+# 消したり上書きしたりさせない (改行・CR に加えて ESC のエスケープシーケンスも)。改行・CR は \n・\r に、ほかの制御文字は ? に置き換える。
+# \ は倍にしない (ShellCheck の助言の "A\"B\"C" のような引用が別のコードに見えてしまう。偽の行は \ では作れない)
+esc_local() {
+  local s=$1 bs='\'
+  s=${s//$'\n'/"${bs}n"}
+  s=${s//$'\r'/"${bs}r"}
+  s=${s//[[:cntrl:]]/?}
+  printf '%s' "$s"
+}
+
+# 止める。GitHub Actions では注釈の形にする (ファイル名や ShellCheck の出力が混ざるので、行頭の :: をワークフローのコマンドとして
+# 読ませない)。注釈は report・warn と同じく標準出力に出す。gha.sh を読み込む前に止まるときも、改行は置き換えて行頭を「error:」に保つ
 die() {
-  echo "error: $*" >&2
+  if $gha && declare -F esc_data > /dev/null; then
+    printf '::error::%s\n' "$(esc_data "$*")"
+  else
+    printf 'error: %s\n' "$(esc_local "$*")" >&2
+  fi
   exit 2
 }
 
 script_dir=$(cd "$(dirname "$0")" && pwd) || die "スクリプトのディレクトリーを特定できない"
 . "$script_dir/../lib/gha.sh" || die "共通スクリプト ($script_dir/../lib/gha.sh) を読み込めない"
 
-gha=false
-[ "${GITHUB_ACTIONS:-}" = true ] && gha=true
 findings=0
 
 # 指摘を 1 件出す。$1 = ファイル、$2 = 行 (不明なら空)、$3 = 種類、$4 = 内容
@@ -70,9 +88,9 @@ report() {
       printf '::error file=%s::%s\n' "$(esc_prop "$1")" "$(esc_data "$3: $4")"
     fi
   elif [ -n "$2" ]; then
-    printf '%s:%s: %s: %s\n' "$1" "$2" "$3" "$4"
+    printf '%s:%s: %s: %s\n' "$(esc_local "$1")" "$2" "$3" "$(esc_local "$4")"
   else
-    printf '%s: %s: %s\n' "$1" "$3" "$4"
+    printf '%s: %s: %s\n' "$(esc_local "$1")" "$3" "$(esc_local "$4")"
   fi
 }
 
@@ -85,9 +103,9 @@ warn() {
       printf '::warning file=%s::%s\n' "$(esc_prop "$1")" "$(esc_data "$3")"
     fi
   elif [ -n "$2" ]; then
-    printf '%s:%s: warning: %s\n' "$1" "$2" "$3"
+    printf '%s:%s: warning: %s\n' "$(esc_local "$1")" "$2" "$(esc_local "$3")"
   else
-    printf '%s: warning: %s\n' "$1" "$3"
+    printf '%s: warning: %s\n' "$(esc_local "$1")" "$(esc_local "$3")"
   fi
 }
 
@@ -95,7 +113,7 @@ notice() {
   if $gha; then
     printf '::notice::%s\n' "$(esc_data "$1")"
   else
-    printf '%s\n' "$1"
+    printf '%s\n' "$(esc_local "$1")"
   fi
 }
 
@@ -156,6 +174,18 @@ has_linux_marker() {
 # merge-base の版の 1 行目 (無ければ空)
 base_first_line() {
   git show "$merge_base:$1" 2>/dev/null | sed -n '1p'
+}
+
+# merge-base の版で検査の対象だったか。作業ツリーの is_target ([ -f ] && [ ! -L ]) と同じく、通常のファイル (mode 100644・100755)
+# だけを数える。symlink の git show は指す先のパスを、ディレクトリーは中の一覧を返すので、名前が *.sh だと対象に見えてしまう
+# (symlink の指す先を変えただけで「対象から外れた」と言い、*.sh という名前のディレクトリーの中のファイル名で
+# Linux 専用の目印がもとからあったように見せられる)。base に無ければ ls-tree の出力は空になる
+was_target_in_base() {
+  case "$(git --literal-pathspecs ls-tree -z "$merge_base" -- "$1" 2>/dev/null | head -c 6)" in
+    100644 | 100755) ;;
+    *) return 1 ;;
+  esac
+  is_target_by "$1" "$(base_first_line "$1")"
 }
 
 first_line_of() {
@@ -241,16 +271,20 @@ if [ "$mode" = diff ]; then
     esac
   done < "$tmp/all-changed"
 
+  # 変わったファイルの状態は 1 回だけ読み、下の 2 つの検査で使い回す
+  git diff -z --name-status --no-ext-diff --diff-filter=ACMRTD -M "$merge_base" "$head" > "$tmp/status" || die "git diff が失敗した"
+
   # base では対象だったのに、head では対象でなくなったファイル (.zsh への改名・zsh の shebang など) と、消した対象のファイル。
   # 書き換えて拡張子も shebang も無い名前へ移すと改名として拾えず D と A になるので、消したことも知らせる
-  git diff -z --name-status --no-ext-diff --diff-filter=MRTD -M "$merge_base" "$head" > "$tmp/status" || die "git diff が失敗した"
   : > "$tmp/renames"
   : > "$tmp/deleted"
   while IFS= read -r -d '' st; do
     IFS= read -r -d '' old || break
     new=$old
-    case "$st" in R*) IFS= read -r -d '' new || break ; printf '%s\0%s\0' "$new" "$old" >> "$tmp/renames" ;; esac
-    is_target_by "$old" "$(base_first_line "$old")" || continue
+    case "$st" in R* | C*) IFS= read -r -d '' new || break ;; esac
+    case "$st" in A* | C*) continue ;; esac
+    case "$st" in R*) printf '%s\0%s\0' "$new" "$old" >> "$tmp/renames" ;; esac
+    was_target_in_base "$old" || continue
     case "$st" in
       # 消したファイルの警告は後ろにまとめて出す (GitHub の注釈は 1 step に 10 件までで、ほかの警告を埋めないように)
       D) printf '%s\0' "$old" >> "$tmp/deleted" ;;
@@ -260,10 +294,10 @@ if [ "$mode" = diff ]; then
 
   # bash の shebang があるのに、拡張子で検査の対象の外になるファイル。足したもの・改名したものと、
   # 既存の対象外のファイル (.command・.zsh など) の shebang を bash に書き換えたもの
-  git diff -z --name-status --no-ext-diff --diff-filter=ACMRT -M "$merge_base" "$head" > "$tmp/added" || die "git diff が失敗した"
   while IFS= read -r -d '' st; do
     IFS= read -r -d '' new || break
     case "$st" in R* | C*) IFS= read -r -d '' new || break ;; esac
+    case "$st" in D*) continue ;; esac
     [ -f "$new" ] && [ ! -L "$new" ] || continue
     is_target "$new" && continue
     has_shell_shebang "$(first_line_of "$new")" || continue
@@ -274,7 +308,7 @@ if [ "$mode" = diff ]; then
         ;;
     esac
     warn "$new" '' "bash の shebang があるが、拡張子で検査の対象の外になる。結果を信用せず差分を見ること"
-  done < "$tmp/added"
+  done < "$tmp/status"
 
   while IFS= read -r -d '' f; do
     # 改名したファイルは旧い名前と比べる (もとからある目印や指示を「足した」と言わない)
@@ -283,13 +317,10 @@ if [ "$mode" = diff ]; then
       [ "$rn" = "$f" ] && old=$ro
     done < "$tmp/renames"
 
-    # base で対象だったか。対象外だったファイル (新しいファイル・.txt からの改名・shebang の追加) は、
+    # base で対象だったか。対象外だったファイル (新しいファイル・.txt からの改名・shebang の追加・symlink からの置き換え) は、
     # もとからあった目印と指示も、今回足したものとして扱う (対象外のうちに仕込んでおく手を拾う)
     was_target=false
-    if git cat-file -e "$merge_base:$old" 2>/dev/null &&
-      is_target_by "$old" "$(base_first_line "$old")"; then
-      was_target=true
-    fi
+    was_target_in_base "$old" && was_target=true
 
     # Linux 専用の目印は、行を足さずに (上の行を消して) 先頭 10 行に入れても効くので、状態で比べる
     if has_linux_marker < "$f"; then
@@ -341,19 +372,38 @@ fi
 
 # ---- bash 3.2 の bash -n と bash 4 以降の構文の grep (Linux 専用の目印のあるファイルは飛ばす)
 : > "$tmp/bash32-targets"
+bash4_args=()
+i=0
+while [ "$i" -lt "${#BASH4_RE[@]}" ]; do
+  bash4_args+=(-e "${BASH4_RE[$i]}")
+  i=$((i + 1))
+done
 while IFS= read -r -d '' f; do
   if has_linux_marker < "$f"; then
     continue
   fi
   printf '%s\0' "$f" >> "$tmp/bash32-targets"
 
+  # 全部のパターンを 1 回の grep で当て (パターンとファイルごとに grep を起動すると、70 ファイルほどで数秒かかる)、
+  # 当たった行だけをパターンごとに当て直して種類を決める。NUL などで binary に見えるファイルでも行を読む (-a)
+  # grep がパターンを読めずに失敗 (exit 2) したら止める。1 回にまとめたので、黙って進むと全部のパターンの当たりが消える
+  grep -anE "${bash4_args[@]}" < "$f" | grep -aEv '^[0-9]+:[[:space:]]*#|# bash-compat: ignore[[:space:]]*$' > "$tmp/hits"
+  [ "${PIPESTATUS[0]}" -le 1 ] || die "bash 4 以降の構文の grep が $f で失敗した"
+  [ -s "$tmp/hits" ] || continue
+  # 行番号を外した中身を別に書き、パターンに当たった「何件目の当たりか」から元の行番号へ戻す。
+  # 中身は binary のこともあるので、sed はバイトのまま扱わせる (macOS の sed は UTF-8 として読めない行で止まる)
+  hit_lines=()
+  while IFS= read -r hit; do
+    hit_lines+=("${hit%%:*}")
+  done < "$tmp/hits"
+  LC_ALL=C sed 's/^[0-9]*://' "$tmp/hits" > "$tmp/hit-text"
   i=0
   while [ "$i" -lt "${#BASH4_RE[@]}" ]; do
-    # NUL などで binary に見えるファイルでも行を読む (-a)
-    grep -anE -- "${BASH4_RE[$i]}" < "$f" | grep -aEv '^[0-9]+:[[:space:]]*#|# bash-compat: ignore[[:space:]]*$' > "$tmp/hits"
-    while IFS= read -r hit; do
-      report "$f" "${hit%%:*}" bash4-syntax "${BASH4_LABEL[$i]} (bash 3.2 では動かない)"
-    done < "$tmp/hits"
+    grep -anE -- "${BASH4_RE[$i]}" < "$tmp/hit-text" > "$tmp/hit-idx"
+    [ "$?" -le 1 ] || die "bash 4 以降の構文の grep が $f で失敗した"
+    while IFS= read -r idx; do
+      report "$f" "${hit_lines[$((${idx%%:*} - 1))]}" bash4-syntax "${BASH4_LABEL[$i]} (bash 3.2 では動かない)"
+    done < "$tmp/hit-idx"
     i=$((i + 1))
   done
 done < "$tmp/targets"
