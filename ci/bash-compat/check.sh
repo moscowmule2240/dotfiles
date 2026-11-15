@@ -235,7 +235,7 @@ if [ "$mode" = diff ]; then
   git diff -z --name-only --no-ext-diff --no-renames "$merge_base" "$head" > "$tmp/all-changed" || die "git diff が失敗した"
   while IFS= read -r -d '' f; do
     case "$f" in
-      .github/workflows/* | ci/bash-compat/* | .bash-compat/* | .shellcheckrc | shellcheckrc | */.shellcheckrc | */shellcheckrc | .gitattributes | */.gitattributes)
+      .github/workflows/* | ci/bash-compat/* | .bash-compat/* | ci/katakana/* | ci/lib/* | .shellcheckrc | shellcheckrc | */.shellcheckrc | */shellcheckrc | .gitattributes | */.gitattributes)
         warn "$f" '' "CI の設定が変わった。結果を信用せず差分を見ること"
         ;;
     esac

@@ -374,6 +374,43 @@ test_late_nul_detected_beyond_8000_bytes() {
   end
 }
 
+# パイプのバッファーを超える大きさ (約 200 KB) の blob で、SIGPIPE を失敗と誤認せず末尾近くまで =W・=D・--all で検査できること
+test_large_blob_beyond_pipe_buffer() {
+  begin test_large_blob_beyond_pipe_buffer
+  new_repo
+  {
+    printf '先頭はOK\n'
+    repeat_a 4000 0
+  } > "$r/large-mod.md"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  {
+    printf '1 行目のポインタ\n' # katakana: ignore
+    repeat_a 4000 0
+    printf '末尾のブラウザ\n' # katakana: ignore
+  } > "$r/large-add.md"
+  {
+    printf '1 行目のサーバ\n' # katakana: ignore
+    repeat_a 4000 0
+    printf '末尾のコンテナ\n' # katakana: ignore
+  } > "$r/large-mod.md"
+  commit "$r" head
+  head=$(git -C "$r" rev-parse HEAD)
+  run_check "$r" "$base" "$head"
+  expect_rc 1
+  expect_out 'large-add.md:1: ポインタ -> ポインター' # katakana: ignore
+  expect_out 'large-add.md:4002: ブラウザ -> ブラウザー' # katakana: ignore
+  expect_out 'large-mod.md:1: サーバ -> サーバー' # katakana: ignore
+  expect_out 'large-mod.md:4002: コンテナ -> コンテナー' # katakana: ignore
+  run_check "$r" --all
+  expect_rc 1
+  expect_out 'large-add.md:1: ポインタ -> ポインター' # katakana: ignore
+  expect_out 'large-add.md:4002: ブラウザ -> ブラウザー' # katakana: ignore
+  expect_out 'large-mod.md:1: サーバ -> サーバー' # katakana: ignore
+  expect_out 'large-mod.md:4002: コンテナ -> コンテナー' # katakana: ignore
+  end
+}
+
 test_added_line_detected
 test_unchanged_and_three_dot_diff
 test_same_line_occurrence_matching
@@ -386,6 +423,7 @@ test_working_tree_encoding_utf16le
 test_typechange_symlink_and_file
 test_interhunk_context_line_numbers
 test_late_nul_detected_beyond_8000_bytes
+test_large_blob_beyond_pipe_buffer
 
 echo "passed: $passed, failed: $failed"
 [ "$failed" = 0 ] || { echo "failed:$failed_names"; exit 1; }

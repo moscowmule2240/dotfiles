@@ -307,10 +307,12 @@ test_head_not_checked_out_fails() {
 test_weakening_changes_warn() {
   begin test_weakening_changes_warn
   new_repo
-  mkdir -p "$r/.github/workflows" "$r/sub" "$r/ci/bash-compat"
+  mkdir -p "$r/.github/workflows" "$r/sub" "$r/ci/bash-compat" "$r/ci/katakana" "$r/ci/lib"
   printf 'on: push\n' > "$r/.github/workflows/x.yml"
   printf 'disable=SC1091\n' > "$r/sub/.shellcheckrc"
   printf '#!/bin/bash\necho a\n' > "$r/ci/bash-compat/check.sh"
+  printf '#!/bin/bash\necho a\n' > "$r/ci/katakana/check.sh"
+  printf '#!/bin/bash\necho a\n' > "$r/ci/lib/gha.sh"
   printf '#!/bin/bash\necho k\n' > "$r/k.sh"
   # shebang が無く、拡張子だけで対象になっているファイル。.zsh に変えると対象から外れる
   printf 'echo m\n' > "$r/m.sh"
@@ -320,6 +322,8 @@ test_weakening_changes_warn() {
   printf 'on: pull_request\n' > "$r/.github/workflows/x.yml"
   printf 'disable=SC2086\n' > "$r/sub/.shellcheckrc"
   printf '#!/bin/bash\necho b\n' > "$r/ci/bash-compat/check.sh"
+  printf '#!/bin/bash\necho b\n' > "$r/ci/katakana/check.sh"
+  printf '#!/bin/bash\necho b\n' > "$r/ci/lib/gha.sh"
   printf '#!/bin/bash\n# bash-compat: linux-only\n# shellcheck disable=SC2086\necho k\n' > "$r/k.sh"
   git -C "$r" mv m.sh m.zsh
   printf '#!/usr/bin/env zsh\necho t\n' > "$r/t"
@@ -327,8 +331,8 @@ test_weakening_changes_warn() {
   run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
   expect_rc 0
   n=$(printf '%s\n' "$out" | grep -c ': warning: ')
-  [ "$n" = 7 ] || fail_because "警告の行が $n (期待は 7)"
-  for w in .github/workflows/x.yml sub/.shellcheckrc ci/bash-compat/check.sh k.sh m.sh t; do
+  [ "$n" = 9 ] || fail_because "警告の行が $n (期待は 9)"
+  for w in .github/workflows/x.yml sub/.shellcheckrc ci/bash-compat/check.sh ci/katakana/check.sh ci/lib/gha.sh k.sh m.sh t; do
     printf '%s\n' "$out" | grep -q "^${w}[:]" || fail_because "$w の警告が無い"
   done
   end
