@@ -5,7 +5,7 @@
 #
 # 使い方 (検査するリポジトリの中で流す):
 #   check.sh --all              HEAD の commit で追跡しているファイルを全部検査する (手元用。commit していない変更は見ない)
-#   check.sh <base> <head>      <base>...<head> (merge-base から) の diff で足した行だけを検査する。作業ツリーは <head>
+#   check.sh <base> <head>      <base>...<head> (merge-base から) の diff で足した行だけを検査する
 # 環境変数:
 #   GITHUB_ACTIONS true なら GitHub Actions の注釈の形で出す
 # 目印:
@@ -19,20 +19,8 @@ die() {
   exit 2
 }
 
-# GitHub Actions の注釈の値のエスケープ。値は % と改行、プロパティはさらに : と ,
-esc_data() {
-  s=$1
-  s=${s//"%"/%25}
-  s=${s//$'\r'/%0D}
-  s=${s//$'\n'/%0A}
-  printf '%s' "$s"
-}
-esc_prop() {
-  s=$(esc_data "$1")
-  s=${s//":"/%3A}
-  s=${s//","/%2C}
-  printf '%s' "$s"
-}
+script_dir=$(cd "$(dirname "$0")" && pwd) || die "スクリプトのディレクトリーを特定できない"
+. "$script_dir/../lib/gha.sh" || die "共通スクリプト ($script_dir/../lib/gha.sh) を読み込めない"
 
 gha=false
 [ "${GITHUB_ACTIONS:-}" = true ] && gha=true
@@ -50,15 +38,25 @@ report() {
 }
 
 # git の blob が検査の対象か。通常ファイル以外 (symlink・submodule)・表そのもの・空ファイル・バイナリは外す。
-# バイナリ判定は git の判定 (先頭 8000 バイトに NUL を含む) に揃える。対象なら中身を $tmp/blob に書き出したまま 0 を返す
-prepare_target_blob() {
+# バイナリ判定は git の判定 (先頭 8000 バイトに NUL を含む) に揃える。先頭 8000 バイトだけ読んで判定し、全量は必要なときだけ取り出す
+is_target_blob() {
   case "$1" in 100*) ;; *) return 1 ;; esac
   case "$3" in
     ci/katakana/words.tsv | ci/katakana/exceptions.txt) return 1 ;;
   esac
-  git cat-file blob "$2" > "$tmp/blob" || die "git cat-file が失敗した ($3)"
-  [ -s "$tmp/blob" ] || return 1
-  head -c 8000 < "$tmp/blob" > "$tmp/head" || die "先頭の読み込みに失敗した ($3)"
+  size=$(git cat-file -s "$2" 2>/dev/null) || die "git cat-file が失敗した ($3)"
+  [ "$size" -gt 0 ] || return 1
+  git cat-file blob "$2" 2>"$tmp/err" | head -c 8000 > "$tmp/head"
+  ps=("${PIPESTATUS[@]}")
+  cat_rc=${ps[0]}
+  head_rc=${ps[1]}
+  [ "$head_rc" = 0 ] || die "先頭の読み込みに失敗した ($3)"
+  if [ "$cat_rc" != 0 ] && [ "$cat_rc" != 141 ]; then
+    want=$size
+    [ "$want" -gt 8000 ] && want=8000
+    got=$(wc -c < "$tmp/head") || die "先頭バイト数の確認に失敗した ($3)"
+    [ "$((got))" = "$want" ] || { cat "$tmp/err" >&2; die "git cat-file が失敗した ($3)"; }
+  fi
   LC_ALL=C tr -d '\000' < "$tmp/head" > "$tmp/head_nonul" || die "NUL の検査に失敗した ($3)"
   cmp_rc=0
   cmp -s "$tmp/head" "$tmp/head_nonul" || cmp_rc=$?
@@ -69,13 +67,17 @@ prepare_target_blob() {
   esac
 }
 
-# macOS の awk はレコードを NUL で切るため、8000 バイトより後ろに NUL を含むテキストでも
-# CI (mawk) と結果が揃うよう、awk に渡す前に NUL を空白に置き換える (削除すると前後の語がつながる)
-copy_blob_for_awk() {
-  LC_ALL=C tr '\000' ' ' < "$tmp/blob" > "$1" || die "一時ファイルの変換に失敗した"
+# macOS の awk は NUL より後ろを捨てるので、NUL の後ろの省略形を見落とす。
+# awk の実装によらず同じ結果にするため、awk に渡す前に NUL を空白に置き換える (削除すると前後の語がつながる)
+extract_blob_for_awk() {
+  git cat-file blob "$1" | LC_ALL=C tr '\000' ' ' > "$2"
+  ps=("${PIPESTATUS[@]}")
+  cat_rc=${ps[0]}
+  tr_rc=${ps[1]}
+  [ "$cat_rc" = 0 ] || die "git cat-file が失敗した ($3)"
+  [ "$tr_rc" = 0 ] || die "一時ファイルの変換に失敗した ($3)"
 }
 
-script_dir=$(cd "$(dirname "$0")" && pwd) || die "スクリプトのディレクトリーを特定できない"
 words_file="$script_dir/words.tsv"
 exceptions_file="$script_dir/exceptions.txt"
 [ -f "$words_file" ] || die "語の表 ($words_file) が無い"
@@ -96,7 +98,6 @@ elif [ "$#" = 2 ]; then
   base=$1
   head=$2
   git cat-file -e "$head^{commit}" 2>/dev/null || die "head ($head) が commit ではない"
-  [ "$(git rev-parse HEAD)" = "$(git rev-parse "$head^{commit}")" ] || die "作業ツリーの HEAD が head ($head) と違う"
   git cat-file -e "$base^{commit}" 2>/dev/null || die "base ($base) が commit ではない"
   merge_base=$(git merge-base "$base" "$head") || die "$base と $head の merge-base が無い"
 else
@@ -124,10 +125,10 @@ if [ "$mode" = all ]; then
 $meta
 EOF
       [ "$obj_type" = blob ] || continue
-      prepare_target_blob "$mode_bits" "$sha" "$f" || continue
+      is_target_blob "$mode_bits" "$sha" "$f" || continue
       idx=${#files[@]}
       files+=("$f")
-      copy_blob_for_awk "$tmp/blobs/$idx"
+      extract_blob_for_awk "$sha" "$tmp/blobs/$idx" "$f"
       printf '=W\t%s\t%s\n' "$idx" "$tmp/blobs/$idx" >> "$tmp/input"
     done < "$tmp/list"
   fi
@@ -149,7 +150,7 @@ EOF
     case "$old_mode" in
       100*) [ "$old_sha" = "$new_sha" ] && continue ;;
     esac
-    prepare_target_blob "$new_mode" "$new_sha" "$new" || continue
+    is_target_blob "$new_mode" "$new_sha" "$new" || continue
     idx=${#files[@]}
     files+=("$new")
     case "$old_mode" in
@@ -160,7 +161,7 @@ EOF
         LC_ALL=C tr '\000' ' ' < "$tmp/diff" >> "$tmp/input" || die "diff の変換に失敗した"
         ;;
       *)
-        copy_blob_for_awk "$tmp/blobs/$idx"
+        extract_blob_for_awk "$new_sha" "$tmp/blobs/$idx" "$new"
         printf '=W\t%s\t%s\n' "$idx" "$tmp/blobs/$idx" >> "$tmp/input"
         ;;
     esac
@@ -171,9 +172,11 @@ if [ ! -s "$tmp/input" ]; then
   exit 0
 fi
 
-# ---- 出現ごとの照合 (LC_ALL=C でバイト列として扱い、例外の語を取り除いた後に直後の 3 バイトで長音符を見分ける)
-LC_ALL=C awk -v words_file="$words_file" -v exceptions_file="$exceptions_file" '
+# ---- 出現ごとの照合 (LC_ALL=C でバイト列として扱い、例外の語を取り除いた後に直後の 3 バイトで長音符を見分ける。awk -v は \ を解釈するため環境変数で渡す)
+LC_ALL=C KATAKANA_WORDS="$words_file" KATAKANA_EXCEPTIONS="$exceptions_file" awk '
 BEGIN {
+  words_file = ENVIRON["KATAKANA_WORDS"]
+  exceptions_file = ENVIRON["KATAKANA_EXCEPTIONS"]
   choon = "ー"
   n_words = 0
   while ((r = (getline l < words_file)) > 0) {
@@ -245,8 +248,6 @@ function check_line(file_idx, line_no, text,    work, i, p, bad, good, blen, res
     close(blob_path)
   } else if (substr($0, 1, 3) == "=D\t") {
     cur_idx = substr($0, 4)
-    in_hunk = 0
-  } else if (substr($0, 1, 11) == "diff --git ") {
     in_hunk = 0
   } else if (substr($0, 1, 3) == "@@ ") {
     p = index($0, " +")

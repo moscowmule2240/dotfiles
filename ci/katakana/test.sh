@@ -11,6 +11,9 @@ repo_root=$(git -C "$here" rev-parse --show-toplevel) || exit 1
 
 # CI の step には GITHUB_ACTIONS=true が入る。注釈の形を確かめるテストだけが明示して渡す
 unset GITHUB_ACTIONS
+# 利用者の git 設定 (diff.interHunkContext や core.autocrlf 等) の影響を切る
+export GIT_CONFIG_GLOBAL=/dev/null
+export GIT_CONFIG_NOSYSTEM=1
 
 mkdir -p "$repo_root/.temp/katakana-test" || exit 1
 work=$(mktemp -d "$repo_root/.temp/katakana-test/run.XXXXXX") || exit 1
@@ -38,7 +41,7 @@ commit() {
 run_check() {
   dir=$1
   shift
-  out=$(cd "$dir" && bash "$check" "$@" 2>&1)
+  out=$(cd "$dir" && "$BASH" "$check" "$@" 2>&1)
   rc=$?
   out_shown=false
 }
@@ -46,7 +49,7 @@ run_check() {
 run_check_gha() {
   dir=$1
   shift
-  out=$(cd "$dir" && GITHUB_ACTIONS=true bash "$check" "$@" 2>&1)
+  out=$(cd "$dir" && GITHUB_ACTIONS=true "$BASH" "$check" "$@" 2>&1)
   rc=$?
   out_shown=false
 }
@@ -153,7 +156,7 @@ test_same_line_occurrence_matching() {
 test_exceptions_and_compounds() {
   begin test_exceptions_and_compounds
   new_repo
-  printf 'エディタブルとサーバントとバッファローとユーザビリティとモニタリングとフィルタリングとマスタリングとバッファリング\n' > "$r/a.md" # katakana: ignore
+  printf 'アカウンタビリティとアダプタビリティとアダプタブルとエディタブルとサーバントとバッファローとユーザビリティとモニタリングとフィルタリングとマスタリングとバッファリング\n' > "$r/a.md" # katakana: ignore
   printf 'ユーザビリティの高いユーザ向け画面\n' >> "$r/a.md" # katakana: ignore
   printf 'サーバレスとコンテナイメージ\n' >> "$r/a.md" # katakana: ignore
   commit "$r" init
@@ -222,9 +225,18 @@ test_deleted_binary_rename_and_errors() {
   run_check "$r" 1234567890abcdef1234567890abcdef12345678 "$head"
   expect_rc 2
   expect_out 'base (1234567890abcdef1234567890abcdef12345678) が commit ではない'
-  run_check "$r" "$base" "$base"
-  expect_rc 2
-  expect_out "作業ツリーの HEAD が head ($base) と違う"
+  printf 'あとから足したサーバ\n' > "$r/later.md" # katakana: ignore
+  commit "$r" later
+  later=$(git -C "$r" rev-parse HEAD)
+  printf '問題の無い行\n' > "$r/ok.md"
+  commit "$r" latest
+  run_check "$r" "$base" "$head"
+  expect_rc 0
+  expect_no_out 'later.md'
+  run_check "$r" "$head" "$later"
+  expect_rc 1
+  expect_out 'later.md:1: サーバ -> サーバー' # katakana: ignore
+  expect_no_out 'ok.md'
   end
 }
 
