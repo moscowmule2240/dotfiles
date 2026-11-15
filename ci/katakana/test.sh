@@ -88,21 +88,23 @@ end() {
   fi
 }
 
-# 足した行の省略形を指摘して exit 1 にし、正しい表記の行は指摘しない
+# 足した行 (バイナリからテキストへの書き換えを含む) の省略形を指摘して exit 1 にし、正しい表記の行は指摘しない
 test_added_line_detected() {
   begin test_added_line_detected
   new_repo
   printf '最初の行\n' > "$r/doc.md"
+  printf 'bin\000\n' > "$r/from-bin.md"
   commit "$r" base
   base=$(git -C "$r" rev-parse HEAD)
-  printf '*.md -diff\n' > "$r/.gitattributes"
   printf '最初の行\nサーバを立てる\nコンテナを動かす\nブラウザーで開く\nエミュレータを使う\n' > "$r/doc.md" # katakana: ignore
+  printf 'サーバに変わる\n' > "$r/from-bin.md" # katakana: ignore
   commit "$r" head
   run_check "$r" "$base" "$(git -C "$r" rev-parse HEAD)"
   expect_rc 1
   expect_out 'doc.md:2: サーバ -> サーバー' # katakana: ignore
   expect_out 'doc.md:3: コンテナ -> コンテナー' # katakana: ignore
   expect_out 'doc.md:5: エミュレータ -> エミュレーター' # katakana: ignore
+  expect_out 'from-bin.md:1: サーバ -> サーバー' # katakana: ignore
   expect_no_out 'doc.md:1:'
   expect_no_out 'doc.md:4:'
   end
@@ -203,8 +205,8 @@ test_deleted_binary_rename_and_errors() {
   git -C "$r" rm -q gone.md
   git -C "$r" mv keep.md moved.md
   printf '新しく足したブラウザーの行\n' >> "$r/moved.md"
-  printf '\000サーバ\n' > "$r/bin.dat" # katakana: ignore
-  ln -s moved.md "$r/link.md"
+  printf 'サーバ\n\000\n' > "$r/bin.dat" # katakana: ignore
+  ln -s サーバ.md "$r/link.md" # katakana: ignore
   commit "$r" head
   head=$(git -C "$r" rev-parse HEAD)
   run_check "$r" "$base" "$head"
@@ -292,6 +294,25 @@ test_typechange_symlink_and_file() {
   end
 }
 
+# diff.interHunkContext で複数の変更が 1 つの hunk にまとまっても、文脈行の分だけ行番号を進められる
+test_interhunk_context_line_numbers() {
+  begin test_interhunk_context_line_numbers
+  new_repo
+  printf '1 行目\n2 行目\n3 行目\n4 行目\n5 行目\n6 行目\n' > "$r/doc.md"
+  commit "$r" base
+  base=$(git -C "$r" rev-parse HEAD)
+  printf '1 行目\nサーバの行\n3 行目\n4 行目\n5 行目\nコンテナの行\n' > "$r/doc.md" # katakana: ignore
+  commit "$r" head
+  head=$(git -C "$r" rev-parse HEAD)
+  export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=diff.interHunkContext GIT_CONFIG_VALUE_0=5
+  run_check "$r" "$base" "$head"
+  unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+  expect_rc 1
+  expect_out 'doc.md:2: サーバ -> サーバー' # katakana: ignore
+  expect_out 'doc.md:6: コンテナ -> コンテナー' # katakana: ignore
+  end
+}
+
 test_added_line_detected
 test_unchanged_and_three_dot_diff
 test_same_line_occurrence_matching
@@ -302,6 +323,7 @@ test_deleted_binary_rename_and_errors
 test_dash_filename_and_following_files
 test_working_tree_encoding_utf16le
 test_typechange_symlink_and_file
+test_interhunk_context_line_numbers
 
 echo "passed: $passed, failed: $failed"
 [ "$failed" = 0 ] || { echo "failed:$failed_names"; exit 1; }

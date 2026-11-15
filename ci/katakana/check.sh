@@ -1,10 +1,10 @@
 #!/bin/bash
-# 変更で足した行 (または --all で追跡している全ファイル) から、カタカナ語の語尾の長音符を
-# 省いた表記を検出する。内閣告示「外来語の表記」・JIS Z 8301:2019 に合わせ、英語の語末が
+# 変更で足した行 (または --all で HEAD の commit が追跡している全ファイル) から、カタカナ語の語尾の
+# 長音符を省いた表記を検出する。内閣告示「外来語の表記」・JIS Z 8301:2019 に合わせ、英語の語末が
 # -er・-or・-ar の語の長音符を省略しない規則を機械で守るため。
 #
 # 使い方 (検査するリポジトリの中で流す):
-#   check.sh --all              追跡しているファイルを全部検査する (手元用)
+#   check.sh --all              HEAD の commit で追跡しているファイルを全部検査する (手元用。commit していない変更は見ない)
 #   check.sh <base> <head>      <base>...<head> (merge-base から) の diff で足した行だけを検査する。作業ツリーは <head>
 # 環境変数:
 #   GITHUB_ACTIONS true なら GitHub Actions の注釈の形で出す
@@ -243,6 +243,8 @@ function check_line(file_idx, line_no, text,    work, i, p, bad, good, blen, res
     }
   } else if (in_hunk && substr($0, 1, 1) == "+") {
     check_line(cur_idx, line_no, substr($0, 2))
+    line_no++
+  } else if (in_hunk && substr($0, 1, 1) == " ") {
     line_no++
   }
 }
