@@ -8,14 +8,18 @@
 # 抜け殻になると brew list には出るのに brew info は Not installed と言い、以後の
 # upgrade は "Cask ... is not installed" で通らない (2026-09-13 に antigravity-cli で発生)。
 # .app を丸ごと管理する cask (typeless 等) は自己更新しても symlink 構造が崩れないので
-# この問題は起きない。binary artifact を持つ cask だけが対象。
+# この問題は起きない。binary / command_wrapper artifact を持つ cask だけが対象。
+# command_wrapper artifact (環境変数を足して本体を exec するラッパー) も同じ扱いにする。brew は
+# ラッパーを Caskroom の中に生成し、bin にはそこへの symlink を張るので、壊れ方も検知方法も binary と同じ。
+# antigravity-cli は binary から command_wrapper に移ったため、binary だけを見ていると検知をすり抜け、
+# 自己更新が残した実ファイルとの衝突で install が「already a Command Wrapper」で落ちる (2026-11-16 に発生)。
 #
-# 検知するのは次の 2 つ。どちらかに該当すれば Caskroom と binary を消して brew install する。
-#   (a) Caskroom/<cask> に .metadata しか無い      … upgrade が途中で落ちた後の状態
-#   (b) binary の symlink が実ファイルになっている  … 自己更新に潰された、upgrade が落ちる前の状態
+# 検知するのは次の 2 つ。どちらかに該当すれば Caskroom と bin のリンクを消して brew install する。
+#   (a) Caskroom/<cask> に .metadata しか無い          … upgrade が途中で落ちた後の状態
+#   (b) bin に張った symlink が実ファイルになっている  … 自己更新に潰された、upgrade が落ちる前の状態
 # (b) の段階で直せば upgrade が壊れないので、update-tools が upgrade の前にリストごと通す。
 # 正常な cask には何もせず、出力もしない (リストで回したときに埋もれないため)。
-# binary artifact を持たない cask は (a) だけ見る。
+# binary / command_wrapper artifact を持たない cask は (a) だけ見る。
 #
 # usage: fix-cask [-n] <cask>
 #   -n  検知結果だけ表示して rm も install もしない
@@ -36,8 +40,8 @@ fix-cask() {
   local prefix caskroom binary
   prefix=$(brew --prefix)
   caskroom="$prefix/Caskroom/$cask"
-  # binary artifact の配置先 (brew が絶対パスで計算済み)。無い cask は空になる
-  binary=$(printf '%s' "$info" | jq -r '.casks[0].artifacts[] | select(.binary) | .target // empty')
+  # binary / command_wrapper artifact の配置先 (brew が絶対パスで計算済み)。無い cask は空になる
+  binary=$(printf '%s' "$info" | jq -r '.casks[0].artifacts[] | select(.binary or .command_wrapper) | .target // empty')
 
   local -a reasons
   # (a) Caskroom に .metadata しか残っていない
@@ -49,7 +53,7 @@ fix-cask() {
   fi
   # (b) brew が張った symlink が実ファイルに置き換わっている
   if [ -n "$binary" ] && [ -e "$binary" ] && [ ! -L "$binary" ]; then
-    reasons+=("binary が symlink ではなく実ファイル: $binary")
+    reasons+=("bin のリンクが symlink ではなく実ファイル: $binary")
   fi
 
   [ ${#reasons} -eq 0 ] && return 0
@@ -63,7 +67,8 @@ fix-cask() {
   [ $dry_run -eq 1 ] && return 0
 
   rm -rf "$caskroom"
-  # dangling になった symlink も消す。残すと brew install が「already a Binary」で落ちる
+  # dangling になった symlink も消す。残すと brew install が「already a Binary」(command_wrapper なら
+  # 「already a Command Wrapper」) で落ちる
   if [ -n "$binary" ] && { [ -e "$binary" ] || [ -L "$binary" ]; }; then
     rm -f "$binary"
   fi
