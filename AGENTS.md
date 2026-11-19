@@ -75,7 +75,7 @@ brew リストと mise の対象は対応関係を保って更新すること。
 
 ### dotmine サブモジュール
 
-`dotmine/` は **private の別リポジトリ** (SSH キー、個人 gitconfig、ライセンス情報など、
+`dotmine/` は **private の別リポジトリ** (個人 gitconfig、ライセンス情報など、
 公開できない個人設定の置き場)。setup.sh / setup.ps1 の末尾で `dotmine/setup.sh` が呼ばれる。
 public な dotfiles 側のコミットに dotmine の内容を持ち込まないこと。
 dotmine の変更が絡む場合はサブモジュール側でコミットしてからポインタを更新する。
@@ -85,7 +85,7 @@ dotmine の変更が絡む場合はサブモジュール側でコミットして
 | 置き場 | 対象 | 例 |
 |---|---|---|
 | dotfiles (public) | 公開して困らない設定と、OSS ツールの導入手順 | brew / mise / choco のパッケージリスト、共通の zsh・git 設定、setup スクリプト本体、symlink 戦略 |
-| dotmine (private) | 秘密情報・個人を特定する情報・組織固有の情報 | SSH 鍵と `known_hosts` / `authorized_keys`、aws / gcloud の認証を伴う設定、`.netrc`、氏名やメールを含む gitconfig、ライセンスキー、社内 tap の formula |
+| dotmine (private) | 秘密情報・個人を特定する情報・組織固有の情報 | SSH の `known_hosts` / `authorized_keys`、aws / gcloud の認証を伴う設定、`.netrc`、氏名やメールを含む gitconfig、ライセンスキー、社内 tap の formula |
 
 公開できない設定が要るときは、**実体を dotmine に置き、こちら側にはリンクや呼び出しだけを残す**
 (既存の例: `files/.gitconfig` は `[include] path = ~/.gitconfig-mine` と書くだけで、実体は dotmine 側)。
