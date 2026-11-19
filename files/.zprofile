@@ -99,5 +99,10 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
+# Unity Hub (brew/cask.txt) が ~/.unity/bin に置く CLI を PATH に足す。
+# Hub は ~/.zshrc の末尾に絶対パスで追記する (~/.zshrc は files/.zshrc への symlink なので、リポジトリが書き換わる)。
+# その行は捨てて、ここで $HOME から読む。~/.unity/env が無いマシンでは何もしない
+[ -r "$HOME/.unity/env" ] && . "$HOME/.unity/env"
+
 # マシン固有の上書き (リポジトリ管理外)。上の設定を上書きできるよう末尾で読む
 [[ -r ~/.zprofile.local ]] && source ~/.zprofile.local
