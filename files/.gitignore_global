@@ -1,4 +1,6 @@
 *~
+.*.sw[a-p]
+.sw[a-p]
 .DS_Store
 
 *.py[cod]
