@@ -33,6 +33,7 @@ $chocoPackages = @(
     "googlechrome"
     "mysql.workbench"
     "pycharm"
+    "t3-code"
     "typeless"
     "vscode"
     # Mac 版の formula に当たるもの (下の mise upgrade より先に mise 自体を上げる)

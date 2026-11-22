@@ -24,6 +24,7 @@ update-tools() {
     mysqlworkbench
     onedrive
     pycharm
+    t3-code
     typeless
     visual-studio-code
   )

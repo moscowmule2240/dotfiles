@@ -22,6 +22,7 @@ onedrive
 postman
 pycharm
 session-manager-plugin
+t3-code
 typeless
 unity-hub
 visual-studio-code
