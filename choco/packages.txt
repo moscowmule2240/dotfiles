@@ -26,6 +26,7 @@ vscode
 antigravity-cli
 antigravity-ide
 claude-code
+t3-code   # 公式の配布は winget / scoop で、choco は有志のパッケージ。中身は公式の GitHub Releases の exe を sha256 で検証して入れるだけ
 
 # --- ユーティリティ ---
 7zip
