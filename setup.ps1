@@ -71,31 +71,17 @@ Get-ChildItem -Path "$PSScriptRoot\files\.git*" -Force | ForEach-Object {
     }
 }
 
-# ssh
-$sshConfDir = "$HOME\.ssh\conf.d"
-if (-not (Test-Path $sshConfDir)) {
-    New-Item -ItemType Directory -Path $sshConfDir -Force | Out-Null
-}
-
-$sshConfigSource = "$PSScriptRoot\files\ssh\conf.d\config"
-$sshConfigTarget = "$sshConfDir\config"
-if (Test-Path $sshConfigTarget) {
-    Remove-Item $sshConfigTarget -Force
-}
-New-Item -ItemType SymbolicLink -Path $sshConfigTarget -Target $sshConfigSource -Force | Out-Null
-
-# dotmine
-& "$PSScriptRoot\dotmine\setup.ps1"
-
-# PowerShell のプロファイル (実体は files/powershell/profile.ps1。SSH の関数・mise activate・update-tools と update-permissions の alias)
+# PowerShell のプロファイル (実体は files/powershell/profile.ps1。mise activate・update-tools と update-permissions の alias)
 # $PROFILE にはその dot-source の 1 行だけを書く (中身を書き込むと、後から直しても既に setup したマシンに反映されないため)。
-# 以前の setup.ps1 が $PROFILE に書き込んだもの (SSH の関数・mise activate・update-tools の alias) は profile.ps1 へ移したので取り除く。
-# 消すのは以前の setup.ps1 が書いた形の行だけで、消した行は表示する。SSH の関数は、書き込んだときと同じ並び
-# (行末の空白は見ない) のときだけ取り除き、手で直してあれば残して知らせる。
+# 以前の setup.ps1 が $PROFILE に書き込んだもの (SSH の関数・mise activate・update-tools の alias) は不要になったか
+# profile.ps1 へ移したので取り除く。消すのは以前の setup.ps1 が書いた形の行だけで、消した行は表示する。
+# SSH の関数は書き込んだときと同じ並び (行末の空白は見ない) のときだけ取り除き、手で直してあれば残して警告する
+# (profile.ps1 側の SSH 関数は Include 方式への移行で廃止したため、手編集の関数が残ると ~/.ssh/config を上書きし得る)。
+# 途中失敗時に旧 Update-SshConfig が ~/.ssh/config (public リポジトリへの symlink) を上書きするのを防ぐため、
+# SSH の symlink 作成より先に $PROFILE を掃除する。
 # dot-source の行は、既にあれば位置を動かさない。無ければ以前の mise activate の位置 (無ければ最初に取り除いた行の位置) に
 # 差し込み、何も取り除かなければ末尾に足す。mise activate の前後の行は、mise の PATH や prompt の上書きの前後関係を当てにして
-# いるので、その位置を保つ。以前の SSH の関数は mise activate より前に書いていたので、手で直して残した関数より dot-source の方が
-# 後になり、profile.ps1 の定義が勝つ。
+# いるので、その位置を保つ。
 # リポジトリの置き場が変わったときに古いパスの行が残らないよう、古い dot-source の行はその位置で差し替える。
 # パスの ' は '' に二重化する (そのままだと $PROFILE 全体が構文エラーになる)。
 # 読み出しに失敗したら止める (空として扱うと、$PROFILE 全体を上書きしてしまう)。
@@ -143,7 +129,7 @@ for ($i = 0; $i -le $currentLines.Count - $legacySshFunctions.Count; $i++) {
 }
 if ($legacyStart -gt 0 -and $currentLines[$legacyStart - 1].Trim() -eq '') { $legacyStart-- }
 if ($legacyStart -lt 0 -and $currentLines -match '^\s*function Update-SshConfig\b') {
-    Write-Host "Left the hand-edited SSH functions in $profilePath (the ones in files\powershell\profile.ps1 override them)"
+    Write-Warning "Hand-edited Update-SshConfig remains in $profilePath. Remove it manually to avoid overwriting ~/.ssh/config."
 }
 
 # 以前の setup.ps1 が書いた行を取り除き、dot-source の行を置く位置を決める
@@ -199,6 +185,61 @@ if (($profileLines -join "`n") -cne ($currentLines -join "`n")) {
     Write-Host "Set $profileSource in $profilePath"
 } else {
     Write-Host "$profilePath already loads files\powershell\profile.ps1"
+}
+
+# ssh
+# 非システムドライブ (D:\Workspace 等) に clone すると既定の継承 ACL が緩く、
+# Win32-OpenSSH の権限検査で拒否されたり他ローカルアカウントから改ざんされたりするため、
+# symlink 先のディレクトリーごと継承を切って SYSTEM・Administrators・現ユーザーのみに絞る。
+# 日本語版 Windows や Microsoft アカウント環境でも失敗しないよう Well-Known SID と現ユーザー SID を使う。
+$sshDir = Join-Path $HOME ".ssh"
+$sshConfigDir = Join-Path $sshDir "config.d"
+if (-not (Test-Path -LiteralPath $sshConfigDir)) {
+    New-Item -ItemType Directory -Path $sshConfigDir -Force | Out-Null
+}
+
+$sshRepoDir = Join-Path $PSScriptRoot "files" "ssh"
+$currentUserSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+$icaclsOut = & icacls $sshRepoDir /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" "*${currentUserSid}:(OI)(CI)F" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "icacls failed on $sshRepoDir (exit code $LASTEXITCODE):`n$($icaclsOut -join "`n")"
+    exit 1
+}
+$icaclsResetOut = & icacls (Join-Path $sshRepoDir "*") /reset /T 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "icacls /reset failed under $sshRepoDir (exit code $LASTEXITCODE):`n$($icaclsResetOut -join "`n")"
+    exit 1
+}
+
+# 旧 conf.d 方式の symlink が残っていれば先に掃除する (git pull 後はダングリングになり得るため Get-Item で判定)
+$legacySshConfigLink = Get-Item -LiteralPath (Join-Path $sshDir "conf.d" "config") -Force -ErrorAction SilentlyContinue
+if ($legacySshConfigLink -and $legacySshConfigLink.LinkType -eq "SymbolicLink") {
+    $legacySshConfigLink.Delete()
+}
+
+# ダングリング symlink は Test-Path が $false を返すため Get-Item -Force で確認して張り直す。
+# Windows の OpenSSH は ControlMaster 系に非対応のため config.d\unix は張らない。
+$sshLinks = @(
+    @{ Path = (Join-Path $sshDir "config"); Target = (Join-Path $sshRepoDir "config") }
+    @{ Path = (Join-Path $sshConfigDir "common"); Target = (Join-Path $sshRepoDir "config.d" "common") }
+)
+foreach ($link in $sshLinks) {
+    $existing = Get-Item -LiteralPath $link.Path -Force -ErrorAction SilentlyContinue
+    if ($existing) {
+        if ($existing.LinkType) {
+            $existing.Delete()
+        } else {
+            Remove-Item -LiteralPath $link.Path -Force
+        }
+    }
+    New-Item -ItemType SymbolicLink -Path $link.Path -Target $link.Target -Force | Out-Null
+}
+
+# dotmine
+& "$PSScriptRoot\dotmine\setup.ps1"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "dotmine/setup.ps1 failed (exit code $LASTEXITCODE)."
+    exit 1
 }
 
 # mise config (symlink ~/.config/mise/config.toml -> dotfiles)

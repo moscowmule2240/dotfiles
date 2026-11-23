@@ -1,0 +1,7 @@
+# OpenSSH は先勝ち (first-match-wins) のため、具体設定を先に、Host * の共通既定を後ろに置く。
+# 存在しないファイルへの Include はエラーにならず無視される (Windows では unix が不在のため自動スキップ)。
+# 注意: config.d/local は mine より前に評価されるため、local に Host * を書くと mine の個別設定を上書きする。
+Include config.d/local
+Include config.d/mine
+Include config.d/unix
+Include config.d/common

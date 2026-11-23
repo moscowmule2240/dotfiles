@@ -49,6 +49,8 @@ macOS / Windows 両対応の個人 dotfiles。ビルド・テスト・lint は�
 実体はすべてリポジトリ内に置き、`$HOME` へはリンクのみ張る。
 
 - `files/.*` → `$HOME/` 直下 (setup.sh のループ。`.config` / `.zfunc` / `.gitconfig-macos` は除外し個別処理)
+- `files/ssh/config` → `~/.ssh/config`、`files/ssh/config.d/{unix,common}` → `~/.ssh/config.d/`
+  (OpenSSH の `Include` 方式。Windows は `ControlMaster` 非対応のため `common` のみリンクする)
 - `files/.config/{mise,uv}/` → `~/.config/` 配下へファイル単位でリンク
 - `files/.zfunc/*` → `~/.zfunc/` (zsh の fpath / autoload 用)
 - `.gitconfig-macos` だけは例外で、setup.sh が `git config --file` で **実体ファイルを生成**する
@@ -85,7 +87,7 @@ dotmine の変更が絡む場合はサブモジュール側でコミットして
 | 置き場 | 対象 | 例 |
 |---|---|---|
 | dotfiles (public) | 公開して困らない設定と、OSS ツールの導入手順 | brew / mise / choco のパッケージリスト、共通の zsh・git 設定、setup スクリプト本体、symlink 戦略 |
-| dotmine (private) | 秘密情報・個人を特定する情報・組織固有の情報 | SSH の `known_hosts` / `authorized_keys`、aws / gcloud の認証を伴う設定、`.netrc`、氏名やメールを含む gitconfig、ライセンスキー、社内 tap の formula |
+| dotmine (private) | 秘密情報・個人を特定する情報・組織固有の情報 | SSH の `config` / `authorized_keys`、aws / gcloud の認証を伴う設定、`.netrc`、氏名やメールを含む gitconfig、ライセンスキー、社内 tap の formula |
 
 公開できない設定が要るときは、**実体を dotmine に置き、こちら側にはリンクや呼び出しだけを残す**
 (既存の例: `files/.gitconfig` は `[include] path = ~/.gitconfig-mine` と書くだけで、実体は dotmine 側)。

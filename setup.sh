@@ -26,8 +26,20 @@ for file in ${PWD}/files/.*; do
 done
 
 # ssh
-mkdir -p $HOME/.ssh/conf.d
-ln -s $PWD/files/ssh/conf.d/config $HOME/.ssh/conf.d/config
+# OpenSSH は ~/.ssh/config および Include 先の実体ファイルの権限を検証するため、
+# umask 002 環境 (Linux 等) でも拒否されないようディレクトリー 700・実体 600 に揃える。
+mkdir -p "$HOME/.ssh/config.d"
+if ! chmod 700 "$HOME/.ssh" "$HOME/.ssh/config.d"; then
+  echo "error: chmod 700 $HOME/.ssh $HOME/.ssh/config.d に失敗した (以降の手順は未実行)" >&2
+  exit 1
+fi
+if ! chmod 600 "${PWD}/files/ssh/config" "${PWD}/files/ssh/config.d/unix" "${PWD}/files/ssh/config.d/common"; then
+  echo "error: chmod 600 files/ssh/* に失敗した (以降の手順は未実行)" >&2
+  exit 1
+fi
+ln -s "${PWD}/files/ssh/config" "$HOME/.ssh/config"
+ln -s "${PWD}/files/ssh/config.d/unix" "$HOME/.ssh/config.d/unix"
+ln -s "${PWD}/files/ssh/config.d/common" "$HOME/.ssh/config.d/common"
 
 # mise config (symlink のみ。実体インストールは brew で mise を入れた後)
 mkdir -p $HOME/.config/mise

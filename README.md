@@ -154,11 +154,11 @@ mas / redis / direnv は config.toml の `os` 指定で Windows ではスキッ�
 
 ### PowerShell プロファイル
 
-pwsh のプロファイルの実体は `files/powershell/profile.ps1` (ssh / scp を呼ぶたびに `~/.ssh/config` を作り直す関数、
-mise activate、`update-tools` と `update-permissions` の alias)。`setup.ps1` は `$PROFILE` にこれを dot-source する 1 行だけを書くので、
+pwsh のプロファイルの実体は `files/powershell/profile.ps1` (mise activate、
+`update-tools` と `update-permissions` の alias)。`setup.ps1` は `$PROFILE` にこれを dot-source する 1 行だけを書くので、
 profile.ps1 を直せば既に setup したマシンにもそのまま効く。以前の `setup.ps1` が `$PROFILE` に直接書き込んだ
 SSH の関数・mise activate・`update-tools` の alias は、`setup.ps1` を流し直すと取り除かれ、取り除いた行が表示される
-(SSH の関数は書き込んだときのままのときだけ。手で直してあれば残し、profile.ps1 の定義が勝つ)。
+(SSH の関数は書き込んだときのままのときだけ。手で直してあれば警告を出して残すので、`~/.ssh/config` の不要な上書きを防ぐため手で消す)。
 対象は pwsh の `$PROFILE` だけで、Windows PowerShell 5.1 のプロファイルに残っているものは手で消す。
 
 `setup.ps1` を流し直さずに切り替えるなら、`$PROFILE` から上の 3 つを消して、次の 1 行を足す

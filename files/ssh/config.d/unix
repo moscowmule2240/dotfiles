@@ -1,0 +1,4 @@
+Host *
+  ControlPath ~/.ssh/cm-%C
+  ControlMaster auto
+  ControlPersist 1h

@@ -1,0 +1,14 @@
+Host *
+  StrictHostKeyChecking ask
+  AddKeysToAgent yes
+
+  IgnoreUnknown UseKeychain
+  UseKeychain yes
+
+  ServerAliveInterval 30
+  ServerAliveCountMax 6
+  TCPKeepAlive no
+
+  ForwardAgent no
+
+  SendEnv LANG LC_*
