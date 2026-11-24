@@ -17,3 +17,8 @@ DOTFILES_ROOT="$(cd "$(dirname "$(readlink -f "${(%):-%x}" 2>/dev/null || realpa
 if [ -f "${DOTFILES_ROOT}/dotmine/files/.zsh_aliases" ]; then
     . "${DOTFILES_ROOT}/dotmine/files/.zsh_aliases"
 fi
+
+# Cloudflare WARP
+alias warp-on='warp-cli connect'
+alias warp-off='warp-cli disconnect'
+alias warp-status='warp-cli status'
