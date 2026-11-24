@@ -5,7 +5,7 @@
 #
 # 対象は Mac 版の並びにそろえる (Mac 版を変えたらこちらも見直す)。Windows に相当するものが無い
 # iterm2・htop・zsh・zsh-completions・zsh-git-prompt と、config.toml で Windows を外している mise の
-# mitmproxy は持たない。claude (デスクトップ版)・onedrive・opencode は choco/packages.txt に無いので持たない。
+# mitmproxy は持たない。claude (デスクトップ版)・onedrive は choco/packages.txt に無いので持たない。
 
 # choco upgrade は管理者権限が要る。setup.ps1 と同じく、管理者でなければ管理者の pwsh で起動し直す
 # (更新は新しいウィンドウで進むので、-NoExit で結果を読めるように残す)
@@ -38,6 +38,7 @@ $chocoPackages = @(
     "vscode"
     # Mac 版の formula に当たるもの (下の mise upgrade より先に mise 自体を上げる)
     "mise"
+    "opencode"
 )
 choco upgrade @chocoPackages -y --skip-if-not-installed
 
