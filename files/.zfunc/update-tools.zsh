@@ -54,6 +54,7 @@ update-tools() {
   brew upgrade --yes --formula \
     htop \
     mise \
+    opencode \
     zsh \
     zsh-completions \
     zsh-git-prompt

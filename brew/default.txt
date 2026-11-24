@@ -11,6 +11,7 @@ liquidprompt
 mise
 mysql-client
 mysql-client@8.0
+opencode
 poppler
 powershell
 pstree
