@@ -103,8 +103,10 @@ update-tools() {
 # /Applications のアプリが自分で上がった版を見ない。名前を指定した upgrade は greedy 扱いなので、記録が古いだけで
 # cask の版 (= アプリより古いことがある) で上書きされる。onedrive は自己更新した 26.204 が 26.198 に戻され、
 # 新しい版が移行した同期 DB を読めずに起動しなくなった (2026-11-13 に発生)。
-# アプリの CFBundleShortVersionString と cask の版 (カンマより前) を zsh の is-at-least で比べる。片方にしか無い桁は 0 とみなす。
-# 桁数の違う版で、アプリ側に無い桁を「同じ」とみなすと、pycharm の 2026.3 → 2026.3.1 のような前に進む upgrade まで止まる。
+# アプリの CFBundleShortVersionString と cask の版 (カンマより前) をドット区切りの各桁で 10 進数値として比べる。片方にしか無い桁は 0 とみなす。
+# 桁数の違う版で、アプリ側に無い桁を「同じ」とみなすと、pycharm の 2026.3 → 2026.3.1 や 2026.3 → 2026.3.0.2 のような前に進む upgrade まで止まる。
+# zsh の is-at-least は比較対象の末尾に 0 を 1 桁しか補わないため、アプリ側が 2 桁以上短く、アプリ側に無い最初の桁が 0 のとき (2026.3 と 2026.3.0.2 など)、
+# 残りの桁を見ずに追いついていると誤判定する。そのため is-at-least を使わず全桁を自前で比べる。
 # 0 とみなす代わりに、アプリの版が build の桁を持たない cask では build の違いを見分けられない。onedrive はアプリが 26.204.1019、
 # cask が 26.204.1019.0007 のように cask だけが build の桁を持つので、cask が同じ版に追いつくと同じ版の入れ直しになり、
 # アプリが同じ版の新しい build (例: .0009) に上がっていたときは古い build へ戻る。版そのものの巻き戻し (26.204 → 26.198) は防げる。
@@ -123,7 +125,6 @@ update-tools() {
 cask-app-ahead() {
   emulate -L zsh
   setopt extendedglob
-  autoload -Uz is-at-least
   local info rows
   if ! info=$(brew info --json=v2 --cask "$@"); then
     print -u2 "cask-app-ahead: brew info failed"
@@ -159,8 +160,29 @@ cask-app-ahead() {
     current=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist" 2>/dev/null) || continue
     [[ $current == <->(.<->)# && $latest == <->(.<->)# ]] || continue
 
-    # is-at-least は 0006 のような 0 埋めの桁も 10 進で比べる (2.11.09 > 2.11.0 を実測)
-    is-at-least "$latest" "$current" && print -r -- "$names"$'\t'"$current"$'\t'"$latest"
+    # 各桁の先頭 0 を除いた桁数で比べ、同じ桁数なら [[ > ]] (zsh ではロケールに依らず ASCII 順) で比べることで、
+    # 0 埋めの 10 進比較 (2.11.09 > 2.11.0 等) と 64 ビット整数を超える桁の比較を両立する。無名関数に閉じ込めて作業変数のスコープを限定する
+    if () {
+      local -a cur_parts=(${(s:.:)1}) lat_parts=(${(s:.:)2})
+      local max_len=$(( ${#cur_parts} > ${#lat_parts} ? ${#cur_parts} : ${#lat_parts} ))
+      local i c_part l_part
+      for (( i = 1; i <= max_len; i++ )); do
+        c_part=${${cur_parts[i]:-0}##0#}
+        l_part=${${lat_parts[i]:-0}##0#}
+        c_part=${c_part:-0}
+        l_part=${l_part:-0}
+        if (( ${#c_part} != ${#l_part} )); then
+          (( ${#c_part} > ${#l_part} ))
+          return
+        elif [[ $c_part != $l_part ]]; then
+          [[ $c_part > $l_part ]]
+          return
+        fi
+      done
+      return 0
+    } "$current" "$latest"; then
+      print -r -- "$names"$'\t'"$current"$'\t'"$latest"
+    fi
   done <<< "$rows"
   return 0
 }
